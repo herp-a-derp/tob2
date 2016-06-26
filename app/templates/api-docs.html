@@ -1,0 +1,10 @@
+<!-- extend base layout -->
+{% extends "__base.html" %}
+
+{% block content %}
+	{% include '_block_flash.html' %}
+	<div class="well">
+		{{markdown_content | markdown}}
+	</div>
+
+{% endblock %}

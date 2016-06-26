@@ -1,0 +1,75 @@
+<!-- extend base layout -->
+
+{% import "_block_paginate.html" as paginator %}
+
+
+{% macro render_page_contents(prefix, pagination, access_key) %}
+
+	<table class='table-striped table table-bordered table-condensed fullwidth'>
+		{%- for page in pagination.items %}
+			<tr>
+				<td>
+					<a href="/{{prefix}}/{{page.id}}/">{{ page[access_key] }}</a>
+
+				</td>
+
+			</tr>
+		{%- endfor %}
+	</table>
+
+{% endmacro %}
+
+
+{% macro render_alphanum_div(prefix) %}
+	<div class='pull-right'>
+		Prefix:
+		{%- for letter in '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+			<a href="/{{prefix}}/{{letter}}/1">{{ letter | upper }}</a>
+		{%- endfor %}
+	</div>
+{% endmacro %}
+
+
+{% extends "__base.html" %}
+
+{% block content %}
+	{% include '_block_flash.html' %}
+	<div style="min-height: 140px;">
+		<div>
+			{% if add_new %}
+				<div class='pull-right'>
+					<h4><a href='/add/{{add_new}}/'>{{add_new_text}}</a></h4>
+				</div>
+			{% endif %}
+			{% if letter != None%}
+				<div>
+					<h2 style='display: inline-block;'>{{ title }}</h2>
+					<h4 style='display: inline-block;'> - Starting with "{{letter | upper}}"</h4>
+				</div>
+			{% else %}
+				<h2>{{ title }}</h2>
+			{% endif %}
+			{% if path_name %}
+
+				{{ render_alphanum_div(path_name) }}
+			{% else %}
+				{{ paginator.render_pagination(sequence_item) }}
+			{% endif %}
+		</div>
+
+		{% if sequence_item.items %}
+
+			<div>
+				{{ render_page_contents(page_url_prefix, sequence_item, name_key) }}
+			</div>
+			{{ paginator.render_pagination(sequence_item) }}
+		{% else %}
+			<h4>No items found!</h4>
+		{% endif %}
+
+
+
+	</div>
+
+	</ul>
+{% endblock %}

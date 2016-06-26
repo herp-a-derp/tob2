@@ -1,0 +1,51 @@
+<!-- extend base layout -->
+{% extends "__base.html" %}
+
+{% block content %}
+	{% include '_block_flash.html' %}
+	<div>
+		<h3>{{ _('Please Sign In') }}</h3>
+		<form class="form" action="" method="post" name="login">
+			{{ form.hidden_tag() }}
+
+			<div class="well">
+
+				{% if login_error %}
+				<h4>{{ login_error }} </h4>
+				{% endif %}
+
+				<div class="control-group{% if form.username.errors %} error{% endif %}">
+					<label class="control-label" for="login">{{ _('Username:') }}</label>
+					<div class="controls">
+						{{ form.username(size=80, class="span4") }}
+						{% for error in form.username.errors %}
+							<span class="help-inline">[{{ error }}]</span><br>
+						{% endfor %}
+					</div>
+				</div>
+				<div class="control-group{% if form.password.errors %} error{% endif %}">
+					<label class="control-label" for="password">{{ _('Password:') }}</label>
+					<div class="controls">
+						{{ form.password(size=80, class="span4") }}
+						{% for error in form.password.errors %}
+							<span class="help-inline">[{{ error }}]</span><br>
+						{% endfor %}
+					</div>
+				</div>
+				<div class="control-group">
+					<div class="controls">
+						<label class="checkbox" for="remember_me">
+							<div style='margin-left: 20px'>{{ form.remember_me }} {{ _('Remember Me') }}</div>
+						</label>
+					</div>
+				</div>
+				<div class="control-group">
+					<div class="controls">
+						<input class="btn btn-primary" type="submit" value="{{ _('Sign In') }}">
+					</div>
+				</div>
+			</div>
+		</form>
+		Don't have an account? <a href='signup'>Create one!</a>
+	</div>
+{% endblock %}

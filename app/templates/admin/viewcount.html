@@ -1,0 +1,56 @@
+<!-- extend base layout -->
+{% extends "__base.html" %}
+{% import "_block_paginate.html" as paginator %}
+
+
+{% block content %}
+	{% include '_block_flash.html' %}
+	{% if g.user.is_admin() %}
+		<div class="well well-large" style="min-height: 140px;">
+			<div>
+				<h2>Viewcount for the {{interval}}:</h2>
+			</div>
+			<p>Total requests: {{total_requests}}</p>
+			<p>Unique visitors: {{ clients | length }}</p>
+			<p>Signed-up users: {{ users }}</p>
+		</div>
+
+		<div class="well well-large" style="min-height: 140px;">
+			<h3>Visitors:</h3>
+			<table class='table-striped table table-bordered table-condensed'>
+
+				<col style="width: 110px">
+				<col>
+				{% for client in clients %}
+					<tr>
+						<td>{{client.originating_ip}}</td>
+						<td>{{client.user_agent}}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		</div>
+		<div class="well well-large" style="min-height: 140px;">
+			<h3>Referrers:</h3>
+			<table class='table-striped table table-bordered table-condensed fullwidth' style="table-layout: fixed;">
+
+				<col style="width: 120px">
+				<col>
+				{% for ref in referred_by %}
+					<tr>
+						<td>{{ref.originating_ip}}</td>
+						<td style="word-wrap: break-word;">{{ref.referer}}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		</div>
+	{% endif %}
+
+{% endblock %}
+
+
+{% block footer %}
+	{% if g.user.is_mod() %}
+		{% include '_block_admin_scripts.html' %}
+	{% endif %}
+{% endblock %}
+
