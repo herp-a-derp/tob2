@@ -5,8 +5,8 @@ from flask import url_for
 from flask_babel import gettext
 # from guess_language import guess_language
 from app import app
-from app.models import Releases
-from app.models import Series
+# from app.models import Releases
+from app.models import Story
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 

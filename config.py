@@ -6,9 +6,6 @@ from settings import DATABASE_USER          as C_DATABASE_USER
 from settings import DATABASE_PASS          as C_DATABASE_PASS
 from settings import SECRET_KEY             as C_SECRET_KEY
 from settings import WTF_CSRF_SECRET_KEY    as C_WTF_CSRF_SECRET_KEY
-from settings import MAIL_USERNAME          as C_MAIL_USERNAME
-from settings import MAIL_PASSWORD          as C_MAIL_PASSWORD
-from settings import MAIL_DEFAULT_SENDER    as C_MAIL_DEFAULT_SENDER
 from settings import SECURITY_PASSWORD_SALT as C_SECURITY_PASSWORD_SALT
 from settings import COVER_PATH             as C_COVER_PATH
 
@@ -62,9 +59,6 @@ class BaseConfig(object):
 	MAIL_USE_TLS = False
 	MAIL_USE_SSL = True
 
-	MAIL_USERNAME          = C_MAIL_USERNAME
-	MAIL_PASSWORD          = C_MAIL_PASSWORD
-	MAIL_DEFAULT_SENDER    = C_MAIL_DEFAULT_SENDER
 
 	ADMIN_USERID  = 2
 	SYSTEM_USERID = 1

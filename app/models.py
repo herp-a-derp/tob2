@@ -38,7 +38,7 @@ class StoryBase(object):
 class TagsBase(object):
 	id          = db.Column(db.Integer, primary_key=True)
 	@declared_attr
-	def series(cls):
+	def story(cls):
 		return db.Column(db.Integer, db.ForeignKey('story.id'))
 	weight      = db.Column(db.Float, default=1)
 	tag         = db.Column(CIText(), nullable=False, index=True)
@@ -46,7 +46,7 @@ class TagsBase(object):
 class GenresBase(object):
 	id          = db.Column(db.Integer, primary_key=True)
 	@declared_attr
-	def series(cls):
+	def story(cls):
 		return db.Column(db.Integer, db.ForeignKey('story.id'))
 	genre       = db.Column(CIText(), nullable=False, index=True)
 
@@ -54,7 +54,7 @@ class GenresBase(object):
 class AuthorBase(object):
 	id          = db.Column(db.Integer, primary_key=True)
 	@declared_attr
-	def series(cls):
+	def story(cls):
 		return db.Column(db.Integer, db.ForeignKey('story.id'))
 	name       = db.Column(CIText(), nullable=False, index=True)
 
@@ -68,7 +68,7 @@ class CoversBase(object):
 	id          = db.Column(db.Integer, primary_key=True)
 	srcfname    = db.Column(db.Text)
 	@declared_attr
-	def series(cls):
+	def story(cls):
 		return db.Column(db.Integer, db.ForeignKey('story.id'))
 	volume      = db.Column(db.Float())
 	chapter     = db.Column(db.Float())
@@ -107,11 +107,6 @@ class Story(db.Model, StoryBase, ModificationInfoMixin):
 	tags           = relationship("Tags",           backref='Story', order_by="Tags.tag")
 	genres         = relationship("Genres",         backref='Story')
 	author         = relationship("Author",         backref='Story')
-	illustrators   = relationship("Illustrators",   backref='Story')
-	alternatenames = relationship("AlternateNames", backref='Story')
-	covers         = relationship("Covers",         backref='Story')
-	releases       = relationship("Releases",       backref='Story')
-	publishers     = relationship("Publishers",     backref='Story')
 
 
 
@@ -129,7 +124,7 @@ class Genres(db.Model, GenresBase, ModificationInfoMixin):
 	__searchable__ = ['genre']
 
 	__table_args__ = (
-		db.UniqueConstraint('series', 'genre'),
+		db.UniqueConstraint('story', 'genre'),
 		)
 	series_row     = relationship("Story",         backref='Genres')
 

@@ -4,17 +4,17 @@ from flask import redirect
 from flask import url_for
 from flask_babel import gettext
 from app import app
-from app.models import Series
+from app.models import Story
 
 
 
 def getSeries(page, letter=None, type=None):
-	series = Series.query
+	series = Story.query
 	if letter:
-		series = series.filter(Series.title.like("{}%".format(letter)))
+		series = series.filter(Story.title.like("{}%".format(letter)))
 	if type:
-		series = series.filter(Series.tl_type==type)
-	series = series.order_by(Series.title)
+		series = series.filter(Story.tl_type==type)
+	series = series.order_by(Story.title)
 
 	series = series.paginate(page, app.config['SERIES_PER_PAGE'], False)
 	return series

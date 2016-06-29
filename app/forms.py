@@ -48,24 +48,19 @@ class LoginForm(Form):
 			loginError()
 
 
-class NewSeriesForm(Form):
-	name =   StringField('Series Title', validators=[DataRequired(), Length(min=1)])
-	type =   RadioField( 'Series Type',
-				validators=[DataRequired(message='You must supply select a type.')],
-				choices=[('oel', 'OEL - (original english language)'), ('translated', 'Translated')])
+# class NewSeriesForm(Form):
+# 	name =   StringField('Series Title', validators=[DataRequired(), Length(min=1)])
+# 	type =   RadioField( 'Series Type',
+# 				validators=[DataRequired(message='You must supply select a type.')],
+# 				choices=[('oel', 'OEL - (original english language)'), ('translated', 'Translated')])
 
 
 
-class NewReleaseForm(Form):
-	volume      = StringField('Volume', validators=[check_volume])
-	chapter     = StringField('Chapter', validators=[check_chapter])
-	subChap     = StringField('Sub-Chapter', validators=[check_sub_chapter])
-	postfix     = StringField('Additional release titles', [Length(max=64)])
-	group       = SelectField('Group', validators=[check_group], coerce=int, default=-1)
-	series_id   = HiddenField('series')
-	is_oel      = HiddenField('is_oel')
-	release_pg  = StringField('Release URL', [URL(message='You must supply a link to the released chapter/volume.')])
-	releasetime = DateTimeField('Release Date', format='%Y/%m/%d %H:%M')
+# class NewReleaseForm(Form):
+# 	series_id   = HiddenField('series')
+# 	is_oel      = HiddenField('is_oel')
+# 	release_pg  = StringField('Release URL', [URL(message='You must supply a link to the released chapter/volume.')])
+# 	releasetime = DateTimeField('Release Date', format='%Y/%m/%d %H:%M')
 
 
 

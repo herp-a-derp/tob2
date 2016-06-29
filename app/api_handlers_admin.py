@@ -1,31 +1,31 @@
 
 from app import db
 from app import app
-from app.models import AlternateNames
-from app.models import AlternateNamesChanges
-from app.models import AlternateTranslatorNames
-from app.models import AlternateTranslatorNamesChanges
+# from app.models import AlternateNames
+# from app.models import AlternateNamesChanges
+# from app.models import AlternateTranslatorNames
+# from app.models import AlternateTranslatorNamesChanges
 from app.models import Author
 from app.models import AuthorChanges
 from app.models import Genres
 from app.models import GenresChanges
-from app.models import Illustrators
-from app.models import IllustratorsChanges
-from app.models import Series
-from app.models import SeriesChanges
+# from app.models import Illustrators
+# from app.models import IllustratorsChanges
+from app.models import Story
+from app.models import StoryChanges
 from app.models import Tags
 from app.models import TagsChanges
-from app.models import Translators
+# from app.models import Translators
 from app.models import Ratings
 
 from app.models import Covers
 from app.models import CoversChanges
 
-from app.models import Releases
-from app.models import ReleasesChanges
-from app.models import Watches
-from app.models import Publishers
-from app.models import PublishersChanges
+# from app.models import Releases
+# from app.models import ReleasesChanges
+# from app.models import Watches
+# from app.models import Publishers
+# from app.models import PublishersChanges
 
 from sqlalchemy import or_
 
@@ -34,10 +34,10 @@ from flask_babel import gettext
 from flask_login import current_user
 
 from flask_login import current_user
-import app.series_tools
+# import app.series_tools
 from app.api_common import getResponse
 
-import FeedFeeder.FeedFeeder
+# import FeedFeeder.FeedFeeder
 
 import app.api_handlers
 

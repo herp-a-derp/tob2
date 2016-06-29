@@ -15,7 +15,7 @@ set -e
 # fi
 
 echo "Fetching db dump from remote server";
-sudo -H -u herp -- bash -c "ssh client@ks1 'sudo -u postgres pg_dump --clean -d tobdb | xz' | pv -cN Db-Fetch-Progress > db_dump_$(date +%Y-%m-%d).sql.xz";
+sudo -H -u herp -- bash -c "ssh client@ks1 'sudo -u postgres pg_dump --clean -d tobdb | xz' | pv -cN Db-Fetch-Progress > tobdb_db_dump_$(date +%Y-%m-%d).sql.xz";
 echo "Updating local database from dump file";
-sudo -H -u durr -- xz -d db_dump_$(date +%Y-%m-%d).sql.xz -c | pv -c | ssh tobuser@10.1.1.61 -t "psql -d tobdb"
+sudo -H -u durr -- xz -d tobdb_db_dump_$(date +%Y-%m-%d).sql.xz -c | pv -c | ssh tobuser@10.1.1.61 -t "psql -d tobdb"
 echo "Done!"

@@ -2,10 +2,10 @@
 from flask import render_template, flash, redirect, url_for, g, request
 from app.forms import SearchForm
 import bleach
-from app.models import AlternateNames
-from app.models import Series
-from app.models import Watches
-import app.nameTools as nt
+# from app.models import AlternateNames
+from app.models import Story
+# from app.models import Watches
+# import app.nameTools as nt
 from sqlalchemy import or_
 from sqlalchemy.sql.functions import Function
 from sqlalchemy.sql.expression import select, desc
@@ -44,7 +44,7 @@ def title_search(searchterm, page=1):
 		dbid = result[0]
 		if not dbid in data:
 			data[dbid] = {}
-			data[dbid]['row'] = Series.query.filter(Series.id==dbid).one()
+			data[dbid]['row'] = Story.query.filter(Story.id==dbid).one()
 			if uid:
 				data[dbid]['watch'] = Watches            \
 						.query                           \

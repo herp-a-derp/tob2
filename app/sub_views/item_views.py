@@ -8,16 +8,16 @@ from flask_babel import gettext
 from app import app
 from app import db
 
-from app.models import Series
+# from app.models import Series
 from app.models import Tags
-from app.models import Feeds
+# from app.models import Feeds
 from app.models import Genres
 from app.models import Author
-from app.models import Illustrators
-from app.models import Translators
-from app.models import Releases
-from app.models import Publishers
-from app.models import Watches
+# from app.models import Illustrators
+# from app.models import Translators
+# from app.models import Releases
+# from app.models import Publishers
+# from app.models import Watches
 
 from sqlalchemy import desc
 from sqlalchemy import select
@@ -27,7 +27,7 @@ from sqlalchemy import func
 import datetime
 from natsort import natsort_keygen
 
-from app.series_tools import get_rating
+# from app.series_tools import get_rating
 
 from app.sub_views import wiki_views
 

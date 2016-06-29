@@ -65,33 +65,9 @@ if not app.debug:
 
 
 
-# ========================================================
-# Forum
-# ========================================================
-
-assets = Environment(app)
-assets.url = '/static'
-assets.directory = app.config['ASSETS_DEST']
-
-less = Bundle('less/style.less', filters='less', output='gen/style.css')
-assets.register('all-css', less)
-
-import forum.forum.views as forum
-app.register_blueprint(forum.bp, url_prefix='/forum')
-
-# Admin
-from forum import admin
-admin.attach_admin(app)
-
-from util import urlify
-from flask.ext.markdown import Markdown
-Markdown(app, safe_mode='escape', extensions=[urlify.URLifyExtension()])
-
-# ========================================================
-
 
 from app import views, models
-from .models import Users, Translators
+# from .models import Users, Translators
 
 CACHE_SIZE = 5000
 userIdCache = {}

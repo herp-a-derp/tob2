@@ -19,16 +19,17 @@ from app import app
 from app import db
 from app import lm
 from app import babel
-from .forms import  LoginForm, SearchForm, SignupForm
+# from .forms import LoginForm
+from .forms import SearchForm
+# from .forms import SignupForm
 from .models import Users
 from .models import News_Posts
-from .models import Series
-from .models import Releases
+# from .models import Series
+# from .models import Releases
 from .models import Covers
-from .models import Feeds
+# from .models import Feeds
 from .models import HttpRequestLog
 
-from .confirm import send_email
 
 
 

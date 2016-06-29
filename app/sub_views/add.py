@@ -11,18 +11,18 @@ import datetime
 import bleach
 import markdown
 from sqlalchemy import and_
-from app.models import Series
-from app.models import Translators
-from app.models import AlternateNames
-from app.models import AlternateTranslatorNames
-from app.models import Releases
-from app.models import News_Posts
-import app.nameTools as nt
-from app.forms import NewGroupForm
-from app.forms import NewSeriesForm
-from app.forms import NewReleaseForm
+# from app.models import Series
+# from app.models import Translators
+# from app.models import AlternateNames
+# from app.models import AlternateTranslatorNames
+# from app.models import Releases
+# from app.models import News_Posts
+# import app.nameTools as nt
+# from app.forms import NewGroupForm
+# from app.forms import NewSeriesForm
+# from app.forms import NewReleaseForm
 from app.forms import PostForm
-import app.series_tools as series_tools
+# import app.series_tools as series_tools
 from app import app
 import datetime
 
@@ -186,12 +186,12 @@ def add_post(form):
 def preset(cls):
 	return lambda : cls(NewReleaseForm=datetime.datetime.now())
 
-dispatch = {
-	'group'   : (NewGroupForm,   add_group,   ''),
-	'series'  : (NewSeriesForm,  add_series,  ''),
-	'release' : (NewReleaseForm, add_release, ''),
-	'post'    : (PostForm,       add_post,    ''),
-}
+# dispatch = {
+# 	'group'   : (NewGroupForm,   add_group,   ''),
+# 	'series'  : (NewSeriesForm,  add_series,  ''),
+# 	'release' : (NewReleaseForm, add_release, ''),
+# 	'post'    : (PostForm,       add_post,    ''),
+# }
 
 
 @app.route('/add/<add_type>/<int:sid>/', methods=('GET', 'POST'))

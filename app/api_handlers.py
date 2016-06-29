@@ -1,17 +1,17 @@
 
 from app import db
 import app
-from app.models import Series
+from app.models import Story
 from app.models import Tags
-from app.models import Genres
+# from app.models import Genres
 from app.models import Covers
 from app.models import Author
-from app.models import Illustrators
-from app.models import Translators
-from app.models import Watches
+# from app.models import Illustrators
+# from app.models import Translators
+# from app.models import Watches
 from flask import g
-from app.models import AlternateNames
-from app.models import AlternateTranslatorNames
+# from app.models import AlternateNames
+# from app.models import AlternateTranslatorNames
 import markdown
 import bleach
 import os.path
@@ -21,10 +21,10 @@ from data_uri import DataURI
 from flask_login import current_user
 import datetime
 import dateutil.parser
-import app.nameTools as nt
+# import app.nameTools as nt
 import datetime
 from app.api_common import getResponse
-import app.series_tools
+# import app.series_tools
 
 VALID_KEYS = {
 	'description-container'  : 'description',
@@ -141,7 +141,7 @@ def updateTitle(series, newTitle):
 
 	newTitle = bleach.clean(newTitle.strip())
 
-	conflict_series = Series.query.filter(Series.title==newTitle).scalar()
+	conflict_series = Story.query.filter(Story.title==newTitle).scalar()
 
 	if conflict_series and conflict_series.id != series.id:
 		return getResponse("A series with that name already exists! Please choose another name", error=True)
@@ -161,7 +161,7 @@ def processMangaUpdateJson(data):
 	validated = validateMangaData(data)
 
 	sid = validated['id']
-	series = Series.query.filter(Series.id==sid).one()
+	series = Story.query.filter(Story.id==sid).one()
 	print(validated)
 
 	for entry in validated['entries']:
