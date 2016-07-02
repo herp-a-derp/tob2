@@ -10,29 +10,10 @@
 	</div>
 
 	<hr class='padded-rule'>
-	{% set release_items = trans_release_items %}
-	{% set show_group = True %}
-
 	<div>
-		<h3>Latest Translated Releases</h3>
-		{% include '_block_releases.html' %}
-		<a href='/translated-releases/'>More Releases</a>
-	</div>
-	<hr class='padded-rule'>
-
-	{% set release_items = oel_release_items %}
-	{% set show_group = False %}
-	<div>
-		<h3>Latest OEL Releases</h3>
-		{% include '_block_releases.html' %}
-		<a href='/oel-releases/'>More Releases</a>
-	</div>
-
-	<hr class='padded-rule'>
-	<div>
-		<h3>Latest RSS Feeds</h3>
-		{% include '_block_feeds.html' %}
-		<a href='/feeds/'>More Feeds</a>
+		<h3>Latest Stories</h3>
+		{% include '_block_stories.html' %}
+		<a href='/stories/'>More Stories</a>
 	</div>
 
 	<hr class='padded-rule'>

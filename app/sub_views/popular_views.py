@@ -1,39 +1,13 @@
 from flask import render_template
 # from guess_language import guess_language
 from app import app
-from app.models import Tags
-from app.models import Genres
-from app.models import Author
-# from app.models import Illustrators
-# from app.models import Translators
-# from app.models import Feeds
-# from app.models import Publishers
-# from app.models import FeedTags
-
 from app.models import Story
 from app.models import Ratings
-# from app.models import Watches
 
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 
-
-
-def get_most_watched(page):
-
-	watches = Watches.query \
-		.with_entities(func.count().label("watch_count"), func.min(Watches.series_id).label("series_id")) \
-		.group_by(Watches.series_id).subquery()
-
-
-	have = Series.query.join(watches, Series.id == watches.c.series_id) \
-		.add_column(watches.c.watch_count) \
-		.order_by(desc(watches.c.watch_count), Series.title)
-
-
-	watch_entries = have.paginate(page, app.config['SERIES_PER_PAGE'], False)
-	return watch_entries
 
 
 
@@ -74,20 +48,6 @@ def get_most_rated(page):
 	return watch_entries
 
 
-
-
-
-@app.route('/most-watched/<page>')
-@app.route('/most-watched/<int:page>')
-@app.route('/most-watched/')
-def renderMostWatched(page=1):
-	return render_template('popular.html',
-						   sequence_item   = get_most_watched(page),
-						   page_mode       = "watches",
-						   page            = page,
-						   title           = 'Most Watched Series',
-						   footnote        = None,
-						   )
 
 
 

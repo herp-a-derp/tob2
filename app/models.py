@@ -30,7 +30,7 @@ class StoryBase(object):
 	orig_lang   = db.Column(db.Text())
 
 	chapter     = db.Column(db.Float(), default=-1)
-	pub_date    = db.Column(db.DateTime)
+	pub_date    = db.Column(db.DateTime, default=datetime.datetime.now)
 
 	fspath      = db.Column(db.Text)
 	hash        = db.Column(db.Text, nullable=False)

@@ -24,7 +24,7 @@ from .forms import SearchForm
 # from .forms import SignupForm
 from .models import Users
 from .models import News_Posts
-# from .models import Series
+from .models import Story
 # from .models import Releases
 from .models import Covers
 # from .models import Feeds
@@ -42,14 +42,10 @@ from sqlalchemy.orm import joinedload
 # of most of the site routes.
 from .sub_views import item_views
 from .sub_views import stub_views
-from .sub_views import user_views
 from .sub_views import admin_views
 from .sub_views import add
 from .sub_views import sequence_views
 from .sub_views import release_views
-from .sub_views import series_views
-from .sub_views import history_view
-from .sub_views import cover_edit_view
 from .sub_views import news_view
 from .sub_views import popular_views
 from .sub_views.search import execute_search
@@ -121,36 +117,23 @@ def internal_error(dummy_error):
 
 
 def get_random_books():
-	items = Series.query.order_by(func.random()).limit(5)
+	items = Story.query.order_by(func.random()).limit(5)
 	return items
 
 
 def get_news():
 	# User ID 2 is the admin acct, as created by the db migrator script
 	# Probably shouldn't be hardcoded, works for the moment.
-	newsPost = News_Posts.query.filter(News_Posts.user_id == 2).order_by(desc(News_Posts.timestamp)).limit(1).one()
+	newsPost = News_Posts.query.filter(News_Posts.user_id == 2).order_by(desc(News_Posts.timestamp)).limit(1).scalar()
 	return newsPost
 
-def get_raw_feeds(limit=20):
-	raw_feeds = Feeds.query              \
-		.options(joinedload('tags'))     \
-		.options(joinedload('authors'))  \
-		.order_by(desc(Feeds.published)) \
-		.limit(20)                       \
-		.all()
-	if raw_feeds:
-		tmp = raw_feeds[0]
+def get_release_feeds():
+	q = Story.query
 
-	return raw_feeds
-
-def get_release_feeds(srctype=None):
-	q = Releases.query
-	if srctype:
-		q = q.filter(Releases.series_row.has(tl_type = srctype))
-
-	q = q.order_by(desc(Releases.published))
-	q = q.options(joinedload('series_row'))
-	q = q.options(joinedload('translators'))
+	q = q.order_by(desc(Story.pub_date))
+	q = q.options(joinedload('tags'))
+	q = q.options(joinedload('genres'))
+	q = q.options(joinedload('author'))
 	q = q.limit(20)
 
 	return q.all()
@@ -159,50 +142,15 @@ def get_release_feeds(srctype=None):
 @app.route('/', methods=['GET'])
 @app.route('/index', methods=['GET'])
 # @login_required
-def index(page=1):
+def index():
 	return render_template('index.html',
 						   title               = 'Home',
 						   random_series       = get_random_books(),
 						   news                = get_news(),
-						   raw_feeds           = get_raw_feeds(),
-						   oel_release_items   = get_release_feeds(srctype='oel'),
-						   trans_release_items = get_release_feeds(srctype='translated'),
+						   release_items       = get_release_feeds(),
 						   )
 
 
-@app.route('/user/<nickname>/<int:page>')
-@app.route('/user/<nickname>')
-# @login_required
-def user(nickname, page=1):
-	user = Users.query.filter_by(nickname=nickname).first()
-	if user is None:
-		flash(gettext('User %(nickname)s not found.', nickname=nickname))
-		return redirect(url_for('index'))
-	posts = user.news_posts.paginate(page, app.config['POSTS_PER_PAGE'], False)
-	return render_template('user.html',
-						   user=user,
-						   posts=posts)
-
-
-
-@app.route('/cover-img/<cid>')
-def renderCoverImage(cid):
-	# TODO: Add a "not found" image
-	cover = Covers.query.filter(Covers.id==cid).first()
-	if not cover:
-		flash(gettext('Cover not found in database! Wat?'))
-		return redirect(url_for('index'))
-
-	covpath = os.path.join(app.config['COVER_DIR_BASE'], cover.fspath)
-	if not os.path.exists(covpath):
-		print("Cover not found! '%s'" % covpath)
-		flash(gettext('Cover file is missing!'))
-		return redirect(url_for('index'))
-
-	return send_file(
-		covpath,
-		conditional=True
-		)
 
 
 @app.route('/favicon.ico')

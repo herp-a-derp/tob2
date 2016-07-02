@@ -1,0 +1,136 @@
+<!-- extend base layout -->
+{% extends "__base.html" %}
+
+{% block content %}
+	{% include '_block_flash.html' %}
+	<div class="well well-large" style="min-height: 140px;">
+		<h2>Add a new {{add_name | title}}:</h2>
+
+		<form method="POST" action="{{request.path}}"  class="form-group">
+			<div class="well well-xs" >
+				<div class="form-group">
+
+				</div>
+
+			</div>
+			<input type="submit" value="Add">
+
+		</form>
+	</div>
+
+{% endblock %}
+
+
+
+
+{% block footer %}
+
+
+	<script src="/static/js/editable.js"></script>
+	<script src="/static/js/autogrow.js"></script>
+	<script src="/static/js/bootstrap-number-input.js"></script>
+
+	<script>
+
+
+		var csrftoken = $('meta[name=csrf-token]').attr('content')
+
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				console.log("Ajax setup!", csrftoken);
+				if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", csrftoken)
+				}
+			}
+		})
+
+		var fileData = '';
+		var fileName = '';
+		var fileDataValid = false;
+		var reader = new FileReader();
+
+		reader.onloadend = function(evt) {
+			// file is loaded
+			fileData = evt.target.result;
+			fileDataValid = true;
+		};
+
+		function fileAdd(files)
+		{
+			fileName = files[0].name;
+			reader.readAsDataURL(files[0]);
+		}
+
+		function saveCallback()
+		{
+			return function(result)
+			{
+				console.log("Save callback!")
+				if (!result.hasOwnProperty("error"))
+				{
+					console.log("No error result?")
+				}
+				if (result['error'])
+				{
+					alert("Error on update!\n\n"+result["message"])
+				}
+				else
+				{
+					location.reload();
+				}
+				console.log(result)
+
+			}
+		}
+
+		function save_covers()
+		{
+			console.log("Saving changes!");
+
+			var covers = $(".coverdiv");
+			var changes = [];
+
+
+			if (fileDataValid)
+			{
+				// Send the new cover, if needed.
+				var change = {
+					"type"  : "new-cover",
+					"name"  : fileName,
+					"file"  : fileData
+
+				}
+				changes.push(change)
+			}
+
+
+			if (changes.length > 0)
+			{
+				console.log("Changes are valid. Sending new data.");
+
+				$(".save-changes-button").each(function(){$(this).prop('disabled', true).text("Working...")});
+
+				var mangaId  = $('meta[name=manga-id]').attr('content')
+				var params = {
+					"mode"      : 'add-story',
+					"item-id"   : mangaId,
+					"entries"   : changes,
+				}
+
+
+				$.ajax({
+					url : "/api",
+					success : saveCallback(),
+					data: JSON.stringify(params),
+					method: "POST",
+					dataType: 'json',
+					contentType: "application/json;",
+				});
+			}
+
+		}
+
+		$('textarea').autogrow({onInitialize:true});
+	</script>
+
+{% endblock %}

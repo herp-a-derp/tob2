@@ -19,56 +19,50 @@ import flags
 def go():
 	import sys
 
-	if "debug" in sys.argv:
-		from gevent.pywsgi import WSGIServer
 
-		print("Running in debug mode.")
-		app.run(host='0.0.0.0')
+	import cherrypy
+	import logging
+
+
+	def fixup_cherrypy_logs():
+		loggers = logging.Logger.manager.loggerDict.keys()
+		for name in loggers:
+			if name.startswith('cherrypy.'):
+				print("Fixing %s." % name)
+				logging.getLogger(name).propagate = 0
+
+
+	cherrypy.tree.graft(app, "/")
+	cherrypy.server.unsubscribe()
+
+	# Instantiate a new server object
+	server = cherrypy._cpserver.Server()
+	# Configure the server object
+	if "all" in sys.argv:
+		server.socket_host = "0.0.0.0"
 	else:
+		server.socket_host = "127.0.0.1"
 
-		import cherrypy
-		import logging
+	server.socket_port = 5001
+	server.thread_pool = 8
 
+	# For SSL Support
+	# server.ssl_module            = 'pyopenssl'
+	# server.ssl_certificate       = 'ssl/certificate.crt'
+	# server.ssl_private_key       = 'ssl/private.key'
+	# server.ssl_certificate_chain = 'ssl/bundle.crt'
 
-		def fixup_cherrypy_logs():
-			loggers = logging.Logger.manager.loggerDict.keys()
-			for name in loggers:
-				if name.startswith('cherrypy.'):
-					print("Fixing %s." % name)
-					logging.getLogger(name).propagate = 0
+	# Subscribe this server
+	server.subscribe()
 
+	# fixup_cherrypy_logs()
 
-		cherrypy.tree.graft(app, "/")
-		cherrypy.server.unsubscribe()
-
-		# Instantiate a new server object
-		server = cherrypy._cpserver.Server()
-		# Configure the server object
-		if "all" in sys.argv:
-			server.socket_host = "0.0.0.0"
-		else:
-			server.socket_host = "127.0.0.1"
-
-		server.socket_port = 5001
-		server.thread_pool = 8
-
-		# For SSL Support
-		# server.ssl_module            = 'pyopenssl'
-		# server.ssl_certificate       = 'ssl/certificate.crt'
-		# server.ssl_private_key       = 'ssl/private.key'
-		# server.ssl_certificate_chain = 'ssl/bundle.crt'
-
-		# Subscribe this server
-		server.subscribe()
-
-		# fixup_cherrypy_logs()
-
-		if hasattr(cherrypy.engine, 'signal_handler'):
-			cherrypy.engine.signal_handler.subscribe()
-		# Start the server engine (Option 1 *and* 2)
-		cherrypy.engine.start()
-		cherrypy.engine.block()
-		# fixup_cherrypy_logs()
+	if hasattr(cherrypy.engine, 'signal_handler'):
+		cherrypy.engine.signal_handler.subscribe()
+	# Start the server engine (Option 1 *and* 2)
+	cherrypy.engine.start()
+	cherrypy.engine.block()
+	# fixup_cherrypy_logs()
 
 
 

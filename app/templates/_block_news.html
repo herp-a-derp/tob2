@@ -1,5 +1,9 @@
 
 <div class="well well-sm">
-	<strong>{{news.title | safe}}</strong>
-	{{news.body | safe}}
+	{% if news != None %}
+		<strong>{{news.title | safe}}</strong>
+		{{news.body | safe}}
+	{% else %}
+		No News (Is that good news?)
+	{% endif %}
 </div>

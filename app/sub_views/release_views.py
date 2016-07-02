@@ -11,61 +11,31 @@ from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
 
-def get_releases(page, srctype=None):
-	releases = Releases.query
-	if srctype:
-		releases = releases.filter(Releases.series_row.has(tl_type = srctype))
-	releases = releases.order_by(desc(Releases.published))
+def get_releases(page):
+	releases = Story.query
+	releases = releases.order_by(desc(Story.pub_date))
 
 	# Join on the series entry. Cuts the total page-rendering queries in half.
-	releases = releases.options(joinedload('series_row'))
-	releases = releases.options(joinedload('translators'))
+	releases = releases.options(joinedload('tags'))
+	releases = releases.options(joinedload('author'))
 	releases = releases.paginate(page, app.config['SERIES_PER_PAGE'], False)
 	return releases
 
 
 
-@app.route('/releases/<page>')
-@app.route('/releases/<int:page>')
-@app.route('/releases/')
-def renderReleasesTable(page=1):
+@app.route('/stories/<letter>/<int:page>')
+@app.route('/stories/<int:page>')
+@app.route('/stories/')
+def renderReleasesTable(letter=None, page=1):
 
 	releases = get_releases(page=page)
 
-	return render_template('releases.html',
+	return render_template('story-list.html',
 						   sequence_item   = releases,
 						   page            = page,
-						   tl_type         = ''
-						   )
-
-
-
-
-@app.route('/translated-releases/<page>')
-@app.route('/translated-releases/<int:page>')
-@app.route('/translated-releases/')
-def renderTranslatedReleasesTable(page=1):
-
-	releases = get_releases(page=page, srctype='translated')
-
-	return render_template('releases.html',
-						   sequence_item   = releases,
-						   page            = page,
-						   tl_type         = 'Translated '
-						   )
-
-
-
-@app.route('/oel-releases/<page>')
-@app.route('/oel-releases/<int:page>')
-@app.route('/oel-releases/')
-def renderOelReleasesTable(page=1):
-
-	releases = get_releases(page=page, srctype='oel')
-
-	return render_template('releases.html',
-						   sequence_item   = releases,
-						   page            = page,
-						   tl_type         = 'OEL ',
-						   show_group      = False
+						   letter          = letter,
+						   path_name       = "stories",
+						   # name_key        = "name",
+						   page_url_prefix = 'stories',
+						   # title           = 'Authors',
 						   )

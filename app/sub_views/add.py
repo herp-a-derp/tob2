@@ -11,83 +11,12 @@ import datetime
 import bleach
 import markdown
 from sqlalchemy import and_
-# from app.models import Series
-# from app.models import Translators
-# from app.models import AlternateNames
-# from app.models import AlternateTranslatorNames
-# from app.models import Releases
-# from app.models import News_Posts
-# import app.nameTools as nt
-# from app.forms import NewGroupForm
-# from app.forms import NewSeriesForm
-# from app.forms import NewReleaseForm
 from app.forms import PostForm
-# import app.series_tools as series_tools
 from app import app
 import datetime
 
 
 
-def add_group(form):
-	name = form.name.data.strip()
-	have = AlternateTranslatorNames.query.filter(AlternateTranslatorNames.cleanname==nt.prepFilenameForMatching(name)).scalar()
-	if have:
-		flash(gettext('Group already exists!'))
-		return redirect(url_for('renderGroupId', sid=have.group))
-	else:
-		new = Translators(
-			name = name,
-			changetime = datetime.datetime.now(),
-			changeuser = g.user.id,
-			)
-		db.session.add(new)
-		db.session.commit()
-		newname = AlternateTranslatorNames(
-				name       = name,
-				cleanname  = nt.prepFilenameForMatching(name),
-				group      = new.id,
-				changetime = datetime.datetime.now(),
-				changeuser = g.user.id
-			)
-		db.session.add(newname)
-		db.session.commit()
-		flash(gettext('Group Created!'))
-		return redirect(url_for('renderGroupId', sid=new.id))
-
-def add_series(form):
-
-	name = form.name.data.strip()
-
-	stripped = nt.prepFilenameForMatching(name)
-	have = AlternateNames.query.filter(AlternateNames.cleanname==stripped).all()
-
-	rel_type = form.type.data.strip()
-
-	if len(have) == 1:
-		flash(gettext('Series exists under a different name!'))
-		return redirect(url_for('renderSeriesId', sid=have[0].series))
-
-	elif have:
-		flash(gettext('Have multiple candidate series that look like that name!'))
-		return redirect(url_for('search', title=name))
-
-	else:
-		new = Series(
-			title      = name,
-			tl_type    = rel_type,
-			changetime = datetime.datetime.now(),
-			changeuser = g.user.id,
-			)
-		db.session.add(new)
-		db.session.commit()
-
-		# session must be committed before adding alternate names,
-		# or the primary key links will fail.
-		series_tools.updateAltNames(new, [name])
-
-		flash(gettext('Series Created!'))
-		# return redirect(url_for('index'))
-		return redirect(url_for('renderSeriesId', sid=new.id))
 
 def add_release(form):
 	print("Add_release call")
@@ -168,6 +97,11 @@ def add_release(form):
 	flash(gettext('If the release you\'re adding has a RSS feed, you can ask for it to be added to the automatic feed system on the forum!'))
 	return redirect(url_for('renderSeriesId', sid=sid))
 
+def add_story(form):
+	flash(gettext('New post added.'))
+	return redirect(url_for('renderNews'))
+	pass
+
 def add_post(form):
 	title   = bleach.clean(form.data['title'], tags=[], strip=True)
 	content = markdown.markdown(bleach.clean(form.data['content'], strip=True))
@@ -180,18 +114,18 @@ def add_post(form):
 	db.session.add(new)
 	db.session.commit()
 	flash(gettext('New post added.'))
-	return redirect(url_for('renderNews'))
+	return redirect(url_for('renderReleasesTable'))
 
 
 def preset(cls):
 	return lambda : cls(NewReleaseForm=datetime.datetime.now())
 
-# dispatch = {
+dispatch = {
 # 	'group'   : (NewGroupForm,   add_group,   ''),
-# 	'series'  : (NewSeriesForm,  add_series,  ''),
 # 	'release' : (NewReleaseForm, add_release, ''),
-# 	'post'    : (PostForm,       add_post,    ''),
-# }
+	'story'   : (None,           None,        ''),
+	'post'    : (PostForm,       add_post,    ''),
+}
 
 
 @app.route('/add/<add_type>/<int:sid>/', methods=('GET', 'POST'))
@@ -208,79 +142,33 @@ def addNewItem(add_type, sid=None):
 	form_class, callee, message = dispatch[add_type]
 	have_auth = g.user.is_authenticated()
 
-	if add_type == 'release':
-		series = Series.query.filter(Series.id==sid).scalar()
-
-		if not series:
-			return render_template(
-					'not-implemented-yet.html',
-					message = "Trying to add a release for series sid: '%s' that doesn't exist? Wat? This shouldn't happen. Are you abusing something?" % sid
-					)
-
-
-		form = form_class(
-				series_id = series.id,
-				is_oel    = series.tl_type
-			)
-
-		altn = AlternateTranslatorNames.query.all()
-		altfmt = [(x.group, x.name) for x in altn if x.group]
-		altfmt.sort(key=lambda x:x[1])
-		form.group.choices = altfmt
-	else:
+	if form_class:
 		form = form_class()
+		if form.validate_on_submit():
+			print("Post request. Validating")
+			if have_auth:
+				print("Validation succeeded!")
+				return callee(form)
+			else:
+				flash(gettext('You must be logged in to make changes!'))
+
+		if add_type == 'post':
+			return render_template(
+					'add-post.html',
+					form=form,
+					)
 
 	print("Trying to validate")
 	# print(form.validate_on_submit())
-	if form.validate_on_submit():
-		print("Post request. Validating")
-		if have_auth:
-			print("Validation succeeded!")
-			return callee(form)
-		else:
-			flash(gettext('You must be logged in to make changes!'))
 
-	else:
-		if not have_auth:
-			flash(gettext('You do not appear to be logged in. Any changes you make will not be saved!'))
+	# else:
+	# 	if not have_auth:
+	# 		flash(gettext('You do not appear to be logged in. Any changes you make will not be saved!'))
 
 
 
-	if add_type == 'release':
-
-		altfmt = [(-1, "")] + altfmt
-		form.group.choices = altfmt
-
-		if 'Not a valid choice' in form.group.errors:
-			form.group.errors.remove('Not a valid choice')
-
+	if add_type == 'story':
 		return render_template(
-				'add-release.html',
-				form=form,
+				'add-story.html',
 				add_name = add_type,
-				message = message,
-				series  = series
-				)
-
-	if add_type == 'post':
-		return render_template(
-				'add-post.html',
-				form=form,
-				)
-
-	if add_type == 'series':
-		return render_template(
-				'add-series.html',
-				form=form,
-				add_name = add_type,
-				message = message
-				)
-
-
-	else:
-		return render_template(
-				'add.html',
-				form=form,
-				add_name = add_type,
-				message = message
 				)

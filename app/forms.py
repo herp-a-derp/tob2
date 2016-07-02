@@ -48,14 +48,6 @@ class LoginForm(Form):
 			loginError()
 
 
-# class NewSeriesForm(Form):
-# 	name =   StringField('Series Title', validators=[DataRequired(), Length(min=1)])
-# 	type =   RadioField( 'Series Type',
-# 				validators=[DataRequired(message='You must supply select a type.')],
-# 				choices=[('oel', 'OEL - (original english language)'), ('translated', 'Translated')])
-
-
-
 # class NewReleaseForm(Form):
 # 	series_id   = HiddenField('series')
 # 	is_oel      = HiddenField('is_oel')

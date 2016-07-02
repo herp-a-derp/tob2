@@ -40,7 +40,7 @@
 	<div  style="min-height: 140px;">
 		<div>
 			<div class='pull-right'>
-				<h4><a href='/add/series/'>Add a Series</a></h4>
+				<h4><a href='/add/story/'>Add a Story</a></h4>
 			</div>
 
 			{% if letter != None%}
@@ -49,19 +49,19 @@
 					<h4 style='display: inline-block;'> - Starting with "{{letter | upper}}"</h4>
 				</div>
 			{% else %}
-				<h2>{{title_prefix}}Book Titles</h2>
+				<h2>{{title_prefix}}Story Titles</h2>
 			{% endif %}
 
 			{{ render_alphanum_div(path_name) }}
 
 		</div>
 
-		{% if series_entries.items %}
+		{% if sequence_item.items %}
 
 			<div>
-				{{ render_page_contents(series_entries, name_key) }}
+				{{ render_page_contents(sequence_item, name_key) }}
 			</div>
-			{{ paginator.render_pagination(series_entries) }}
+			{{ paginator.render_pagination(sequence_item) }}
 		{% else %}
 			<h4>No items found!</h4>
 		{% endif %}

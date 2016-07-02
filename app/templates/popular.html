@@ -3,36 +3,6 @@
 {% import "_block_paginate.html" as paginator %}
 
 
-{% macro render_page_watches(prefix, pagination, access_key) %}
-
-	<table class='table-striped table table-bordered table-condensed fullwidth'>
-		<colgroup>
-			<col />
-			<col />
-		</colgroup>
-		<tr>
-			<th>Title</th>
-			<th>Watchers</th>
-		</tr>
-		{%- for page, watch_cnt in pagination.items %}
-			<tr>
-				<td>
-					{% if page.tl_type == 'oel' %}
-						<div class='pull-right'>
-							<a href='/help#what-is-oel'>OEL</a>
-						</div>
-					{% endif %}
-					<a href="/series-id/{{page.id}}/">{{ page.title }}</a><br>
-				</td>
-				<td style='text-align: right;'>
-					{{watch_cnt}}
-				</td>
-
-			</tr>
-		{%- endfor %}
-	</table>
-
-{% endmacro %}
 
 
 {% macro render_page_ratings(prefix, pagination, access_key) %}
@@ -103,9 +73,7 @@
 		{% if sequence_item.items %}
 
 			<div>
-				{% if page_mode == "watches" %}
-					{{ render_page_watches(page_url_prefix, sequence_item, name_key) }}
-				{% elif page_mode == "ratings" %}
+				{% if page_mode == "ratings" %}
 					{{ render_page_ratings(page_url_prefix, sequence_item, name_key) }}
 				{% else %}
 					Wat?
