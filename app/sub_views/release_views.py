@@ -35,7 +35,7 @@ def renderReleasesTable(letter=None, page=1):
 						   page            = page,
 						   letter          = letter,
 						   path_name       = "stories",
-						   # name_key        = "name",
+						   name_key        = "title",
 						   page_url_prefix = 'stories',
 						   # title           = 'Authors',
 						   )

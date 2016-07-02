@@ -7,7 +7,7 @@ from settings import DATABASE_PASS          as C_DATABASE_PASS
 from settings import SECRET_KEY             as C_SECRET_KEY
 from settings import WTF_CSRF_SECRET_KEY    as C_WTF_CSRF_SECRET_KEY
 from settings import SECURITY_PASSWORD_SALT as C_SECURITY_PASSWORD_SALT
-from settings import COVER_PATH             as C_COVER_PATH
+from settings import FILE_BACKEND_PATH      as C_FILE_BACKEND_PATH
 
 import os
 import sys
@@ -25,7 +25,7 @@ class BaseConfig(object):
 	CSRF_ENABLED = True
 	WTF_CSRF_ENABLED = True
 
-	COVER_DIR_BASE = os.path.abspath(os.path.join(basedir, C_COVER_PATH))
+	FILE_BACKEND_PATH = os.path.abspath(os.path.join(basedir, C_FILE_BACKEND_PATH))
 
 
 	# administrator list

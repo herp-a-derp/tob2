@@ -10,11 +10,18 @@
 			<tr>
 				<td>
 					<a href="/series-id/{{page.id}}/">{{ page[access_key] }}</a>
-					{% if page.tl_type == 'oel' %}
-						<div class='pull-right'>
-							<a href='/help#what-is-oel'>OEL</a>
-						</div>
-					{% endif %}
+					<div class='pull-right'>
+						By <a href='/author-id/{{page.author[0].id}}/'>{{page.author[0].name}}</a>
+					</div>
+					<div>
+						{{page.description | safe}}
+					</div>
+					<div class='pull-right'>
+						{% for tag in page.tags %}
+							<span><a href="/tag-id/{{tag.id}}/">{{tag.tag.split("-")[-1]}}</a></span>
+						{% endfor %}
+
+					</div>
 				</td>
 
 			</tr>

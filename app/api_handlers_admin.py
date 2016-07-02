@@ -1,31 +1,15 @@
 
 from app import db
 from app import app
-# from app.models import AlternateNames
-# from app.models import AlternateNamesChanges
-# from app.models import AlternateTranslatorNames
-# from app.models import AlternateTranslatorNamesChanges
 from app.models import Author
 from app.models import AuthorChanges
 from app.models import Genres
 from app.models import GenresChanges
-# from app.models import Illustrators
-# from app.models import IllustratorsChanges
 from app.models import Story
 from app.models import StoryChanges
 from app.models import Tags
 from app.models import TagsChanges
-# from app.models import Translators
-from app.models import Ratings
 
-from app.models import Covers
-from app.models import CoversChanges
-
-# from app.models import Releases
-# from app.models import ReleasesChanges
-# from app.models import Watches
-# from app.models import Publishers
-# from app.models import PublishersChanges
 
 from sqlalchemy import or_
 
@@ -39,38 +23,6 @@ from app.api_common import getResponse
 
 # import FeedFeeder.FeedFeeder
 
-
-
-
-def getReleaseFromId(inId):
-	ret = Releases.query.filter(Releases.id==inId).one()
-	return ret
-
-def toggle_counted(data):
-	release = getReleaseFromId(data['id'])
-	release.include = not release.include
-	db.session.commit()
-
-	flash(gettext('Release %(id)s count-state toggled. New state: %(state)s', id=release.id, state="counted" if release.include else "uncounted"))
-	return getResponse("Item count-state toggled!", error=False)
-
-def delete(data):
-	release = getReleaseFromId(data['id'])
-	db.session.delete(release)
-	db.session.commit()
-	flash(gettext('Release deleted.'))
-	return getResponse("Release deleted.", error=False)
-
-
-RELEASE_OPS = {
-	'toggle-counted' : toggle_counted,
-	'delete'         : delete,
-}
-
-BOOL_LUT = {
-	"True"  : True,
-	"False" : False,
-}
 
 
 
@@ -200,8 +152,6 @@ def deleteStory(data):
 			TagsChanges,
 			Genres,
 			GenresChanges,
-			Covers,
-			CoversChanges,
 			# Story,
 			# StoryChanges,
 		]

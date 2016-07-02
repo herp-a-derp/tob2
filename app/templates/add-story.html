@@ -8,13 +8,103 @@
 
 		<form method="POST" action="{{request.path}}"  class="form-group">
 			<div class="well well-xs" >
-				<div class="form-group">
+				<div class="row storydiv">
+					<div class="form-group">
+						<label for="title">Title</label>
+						<input id="story-title" name="title" size="60" maxlength="80" class="form-control" type="text" value="">
 
+
+					</div>
+					<div class="form-group">
+						<label for="author">Author</label>
+						<input id="story-author" name="author" size="60" maxlength="80" class="form-control" type="text" value="">
+
+
+					</div>
+					<div class="form-group">
+						<label for="description">Story Description</label>
+						<textarea id="story-description" name="description" class="form-control" rows="7" size="60" maxlength="500"></textarea>
+
+					</div>
+					<div class="form-group">
+						<label for='story-file'>Story File</label>
+						<input type="file" name="story-file" id="story-file-id" onchange="fileAdd(this.files);" />
+					</div>
+					<div class="form-group">
+						<label >Story tags:</label>
+						<div>
+							<div class='col-md-6'>
+								<strong>Speed</strong>
+								<ul>
+									<li><input class='story-tag' type="checkbox" name="speed" value="slow">Slow Growth (hours/days)
+									<li><input class='story-tag' type="checkbox" name="speed" value="medium">Growth measured in minutes
+									<li><input class='story-tag' type="checkbox" name="speed" value="instant">Instant growth
+								</ul>
+							</div>
+							<div class='col-md-6'>
+								<strong>Cause</strong>
+								<ul>
+									<li><input class='story-tag' type="checkbox" name="cause" value="magic">Magic</li>
+									<li><input class='story-tag' type="checkbox" name="cause" value="chemical">Chemical</li>
+									<li><input class='story-tag' type="checkbox" name="cause" value="science">Science</li>
+								</ul>
+							</div>
+							<div class='col-md-6'>
+								<strong>Other Growth</strong>
+								<ul>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="ag">Ass Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="fg">Fat Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="gts">Giantess</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="hg">Hair Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="lg">Leg Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="mg">Muscle Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="mmg">Male Muscle Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="mpg">Male Penis Growth</li>
+									<li><input class='story-tag' type="checkbox" name="other-g" value="mult">Multiple Breasts (more than 2)</li>
+								</ul>
+							</div>
+							<div class='col-md-6'>
+								<strong>Amount of Growth</strong>
+								<ul>
+									<li><input class='story-tag' type="checkbox" name="size" value="big">Large but realistic size</li>
+									<li><input class='story-tag' type="checkbox" name="size" value="huge">Unrealistically huge</li>
+									<li><input class='story-tag' type="checkbox" name="size" value="wow">Room-filling or larger</li>
+								</ul>
+							</div>
+							<div class='col-md-6'>
+								<strong>Gender Change</strong>
+								<ul>
+									<li><input class='story-tag' type="checkbox" name="tg" value="ftm">Female to Male</li>
+									<li><input class='story-tag' type="checkbox" name="tg" value="mtf">Male to Female</li>
+								</ul>
+							</div>
+							<div class='col-md-6'>
+								<strong>Other Story Attributes</strong>
+								<ul>
+									<li><input class='story-tag' type="checkbox" name="other" value="aliens">Extraterrestrial participation</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="ar">Age Regression</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="bond">Bondage</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="rip">Clothes Burst/Rip</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="hyp">Hypnosis</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="inc">Incest</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="lac">Lactation</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="ment">Mental transformation</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="nc">Non-consensual</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="offstage">Events occur offstage</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="preg">Pregnancy</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="rc">Remote-Controlled</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="sc">Self-Controlled</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="shem">She-Male</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="weird">Weird transformations</li>
+									<li><input class='story-tag' type="checkbox" name="other" value="asleep">While subject is sleeping</li>
+								</ul>
+							</div>
+						</div>
+					</div>
 				</div>
-
 			</div>
-			<input type="submit" value="Add">
-
+			<button type="button" onclick="add_story()" class="pull-right add-story-button" style='width:160px'>Add Story</button>
+			<div class='clearfix'></div>
 		</form>
 	</div>
 
@@ -83,50 +173,72 @@
 			}
 		}
 
-		function save_covers()
+		function add_story()
 		{
 			console.log("Saving changes!");
+			console.log("Oh HAI!");
 
-			var covers = $(".coverdiv");
-			var changes = [];
+			var storyTitle = $("#story-title")
+			var storyAuthor = $("#story-author")
+			var storyDesc = $("#story-description")
 
+			var tags = [];
+			var boxes = $(".story-tag")
+			console.log(boxes)
+			boxes.each(function(idx){
+				var tag = [$( this ).attr("name"), $( this ).attr("value")];
+				if ($(this).is(':checked'))
+					tags.push(tag);
 
-			if (fileDataValid)
+			})
+
+			console.log(tags)
+
+			if (storyTitle.val().length == 0)
 			{
-				// Send the new cover, if needed.
-				var change = {
-					"type"  : "new-cover",
-					"name"  : fileName,
-					"file"  : fileData
+				alert("You have to provide a story title!");
+				return;
+			}
+			if (storyDesc.val().length == 0)
+			{
+				alert("You have to provide a story description!");
+				return;
+			}
+			if (!fileDataValid)
+			{
+				alert("You have to provide a story file!")
+				return;
+			}
 
-				}
-				changes.push(change)
+			var change = {
+				"type"  : "new-story",
+				"name"  : storyTitle.val(),
+				"auth"  : storyAuthor.val(),
+				"desc"  : storyDesc.val(),
+				"fname" : fileName,
+				"file"  : fileData,
+				"tags"  : tags
 			}
 
 
-			if (changes.length > 0)
-			{
-				console.log("Changes are valid. Sending new data.");
+			console.log("Changes are valid. Sending new data.");
 
-				$(".save-changes-button").each(function(){$(this).prop('disabled', true).text("Working...")});
+			// $(".add-story-button").each(function(){$(this).prop('disabled', true).text("Working...")});
 
-				var mangaId  = $('meta[name=manga-id]').attr('content')
-				var params = {
-					"mode"      : 'add-story',
-					"item-id"   : mangaId,
-					"entries"   : changes,
-				}
-
-
-				$.ajax({
-					url : "/api",
-					success : saveCallback(),
-					data: JSON.stringify(params),
-					method: "POST",
-					dataType: 'json',
-					contentType: "application/json;",
-				});
+			var params = {
+				"mode"      : 'add-story',
+				"story"   : change,
 			}
+
+
+			$.ajax({
+				url : "/api",
+				success : saveCallback(),
+				data: JSON.stringify(params),
+				method: "POST",
+				dataType: 'json',
+				contentType: "application/json;",
+			});
 
 		}
 

@@ -8,6 +8,7 @@ from app import app
 
 from app.models import Tags
 from app.models import Author
+from app.models import Story
 
 from sqlalchemy import desc
 from sqlalchemy import select
@@ -18,7 +19,7 @@ import datetime
 
 
 def load_series_data(sid):
-	series       =       Series.query
+	series       =       Story.query
 
 	# Adding these additional joinedload values, while they /should/
 	# help, since the relevant content is then loaded during rendering
@@ -28,12 +29,9 @@ def load_series_data(sid):
 	# series = series.options(joinedload('covers'))
 
 	series = series.options(joinedload('author'))
-	series = series.options(joinedload('alternatenames'))
-	series = series.options(joinedload('illustrators'))
 	series = series.options(joinedload('tags'))
-	series = series.options(joinedload('releases.translators'))
 
-	series = series.filter(Series.id==sid)
+	series = series.filter(Story.id==sid)
 
 	series = series.first()
 
@@ -100,9 +98,9 @@ def get_author(sid):
 	items = Author.query.filter(Author.name==author.name).all()
 	ids = []
 	for item in items:
-		ids.append(item.series)
+		ids.append(item.story)
 
-	series = Series.query.filter(Series.id.in_(ids)).order_by(Series.title)
+	series = Story.query.filter(Story.id.in_(ids)).order_by(Story.title)
 
 	return author, series
 
@@ -118,9 +116,9 @@ def get_tag_id(sid, page=1):
 	items = Tags.query.filter(Tags.tag==tag.tag).all()
 	ids = []
 	for item in items:
-		ids.append(item.series)
+		ids.append(item.story)
 
-	series = Series.query.filter(Series.id.in_(ids)).order_by(Series.title)
+	series = Story.query.filter(Story.id.in_(ids)).order_by(Story.title)
 	return tag, series
 
 
@@ -143,7 +141,7 @@ def renderAuthorId(sid, page=1):
 						   page_url_prefix = 'series-id',
 						   searchTarget    = 'Authors',
 						   searchValue     = author.name,
-						   wiki            = wiki_views.render_wiki("Author", author.name)
+						   # wiki            = wiki_views.render_wiki("Author", author.name)
 						   )
 
 
@@ -164,6 +162,6 @@ def renderTagId(sid, page=1):
 						   name_key        = "title",
 						   page_url_prefix = 'series-id',
 						   searchTarget    = 'Tags',
-						   searchValue     = tag.tag,
-						   wiki            = wiki_views.render_wiki("Tag", tag.tag)
+						   searchValue     = tag.tag.split("-")[-1],
+						   # wiki            = wiki_views.render_wiki("Tag", tag.tag)
 						   )

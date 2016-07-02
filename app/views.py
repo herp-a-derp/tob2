@@ -25,9 +25,6 @@ from .forms import SearchForm
 from .models import Users
 from .models import News_Posts
 from .models import Story
-# from .models import Releases
-from .models import Covers
-# from .models import Feeds
 from .models import HttpRequestLog
 
 

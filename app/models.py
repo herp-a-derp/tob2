@@ -32,6 +32,7 @@ class StoryBase(object):
 	chapter     = db.Column(db.Float(), default=-1)
 	pub_date    = db.Column(db.DateTime, default=datetime.datetime.now)
 
+	srcfname    = db.Column(db.Text)
 	fspath      = db.Column(db.Text)
 	hash        = db.Column(db.Text, nullable=False)
 
@@ -64,17 +65,6 @@ class LanguageBase(object):
 	id              = db.Column(db.Integer, primary_key=True)
 	language   = db.Column(CIText(), nullable=False, index=True)
 
-class CoversBase(object):
-	id          = db.Column(db.Integer, primary_key=True)
-	srcfname    = db.Column(db.Text)
-	@declared_attr
-	def story(cls):
-		return db.Column(db.Integer, db.ForeignKey('story.id'))
-	volume      = db.Column(db.Float())
-	chapter     = db.Column(db.Float())
-	fragment    = db.Column(db.Float())
-	description = db.Column(db.Text)
-
 
 class ChangeLogMixin(object):
 	operation      = db.Column(db.Text())
@@ -104,9 +94,9 @@ class Story(db.Model, StoryBase, ModificationInfoMixin):
 	__table_args__ = (
 		db.UniqueConstraint('title'),
 		)
-	tags           = relationship("Tags",           backref='Story', order_by="Tags.tag")
-	genres         = relationship("Genres",         backref='Story')
-	author         = relationship("Author",         backref='Story')
+	tags           = relationship("Tags",   backref='Story', order_by="Tags.tag")
+	genres         = relationship("Genres", backref='Story')
+	author         = relationship("Author", backref='Story')
 
 
 
@@ -146,9 +136,6 @@ class Language(db.Model, LanguageBase, ModificationInfoMixin):
 		db.UniqueConstraint('language'),
 		)
 
-class Covers(db.Model, CoversBase, ModificationInfoMixin):
-	__tablename__ = 'covers'
-
 
 class StoryChanges(db.Model, StoryBase, ModificationInfoMixin, ChangeLogMixin):
 	__tablename__ = "serieschanges"
@@ -165,10 +152,6 @@ class GenresChanges(db.Model, GenresBase, ModificationInfoMixin, ChangeLogMixin)
 class AuthorChanges(db.Model, AuthorBase, ModificationInfoMixin, ChangeLogMixin):
 	__tablename__ = "authorchanges"
 	srccol   = db.Column(db.Integer, db.ForeignKey('author.id', ondelete="SET NULL"), index=True)
-
-class CoversChanges(db.Model, CoversBase, ModificationInfoMixin, ChangeLogMixin):
-	__tablename__ = "coverschanges"
-	srccol   = db.Column(db.Integer, db.ForeignKey('covers.id', ondelete="SET NULL"), index=True)
 
 
 class LanguageChanges(db.Model, LanguageBase, ModificationInfoMixin, ChangeLogMixin):
@@ -251,7 +234,6 @@ trigger_on = [
 	Genres,
 	Author,
 	Language,
-	Covers,
 ]
 
 def install_trigram_indice_on_column(table, column):
