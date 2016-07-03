@@ -2,42 +2,17 @@
 
 {% extends "__base.html" %}
 {% import "_block_paginate.html" as paginator %}
-
-{% macro render_page_contents(pagination, access_key) %}
-
-	<table class='table-striped table table-bordered table-condensed fullwidth'>
-		{%- for page in pagination.items %}
-			<tr>
-				<td>
-					<a href="/series-id/{{page.id}}/">{{ page[access_key] }}</a>
-					<div class='pull-right'>
-						By <a href='/author-id/{{page.author[0].id}}/'>{{page.author[0].name}}</a>
-					</div>
-					<div>
-						{{page.description | safe}}
-					</div>
-					<div class='pull-right'>
-						{% for tag in page.tags %}
-							<span><a href="/tag-id/{{tag.id}}/">{{tag.tag.split("-")[-1]}}</a></span>
-						{% endfor %}
-
-					</div>
-				</td>
-
-			</tr>
-		{%- endfor %}
-	</table>
-
-{% endmacro %}
-
+{% import '_block_stories.html' as story_block %}
 
 {% macro render_alphanum_div(prefix) %}
-	<div class='pull-right'>
-		Prefix:
-		{%- for letter in '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
-			<a href="/{{prefix}}/{{letter}}/1">{{ letter | upper }}</a>
-		{%- endfor %}
-	</div>
+	{% if prefix %}
+		<div class='pull-right'>
+			Prefix:
+			{%- for letter in '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+				<a href="/{{prefix}}/{{letter}}/1">{{ letter | upper }}</a>
+			{%- endfor %}
+		</div>
+	{% endif %}
 {% endmacro %}
 
 
@@ -52,9 +27,15 @@
 
 			{% if letter != None%}
 				<div>
-					<h2 style='display: inline-block;'>{{title_prefix}}Book Titles</h2>
+					{% if major_title != None %}
+						<h2 style='display: inline-block;'>{{major_title}}</h2>
+					{% else %}
+						<h2 style='display: inline-block;'>{{title_prefix}}Book Titles</h2>
+					{% endif %}
 					<h4 style='display: inline-block;'> - Starting with "{{letter | upper}}"</h4>
 				</div>
+			{% elif major_title != None %}
+					<h2>{{major_title}}</h2>
 			{% else %}
 				<h2>{{title_prefix}}Story Titles</h2>
 			{% endif %}
@@ -66,7 +47,7 @@
 		{% if sequence_item.items %}
 
 			<div>
-				{{ render_page_contents(sequence_item, name_key) }}
+				{{ story_block.render_page_contents(sequence_item, name_key) }}
 			</div>
 			{{ paginator.render_pagination(sequence_item) }}
 		{% else %}

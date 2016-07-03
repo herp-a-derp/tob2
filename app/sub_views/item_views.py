@@ -18,77 +18,15 @@ from sqlalchemy import func
 import datetime
 
 
-def load_series_data(sid):
-	series       =       Story.query
 
-	# Adding these additional joinedload values, while they /should/
-	# help, since the relevant content is then loaded during rendering
-	# if they're not already loaded, somehow manages to COMPLETELY
-	# tank the query performance.
-	# series = series.options(joinedload('tags'))
-	# series = series.options(joinedload('covers'))
-
-	series = series.options(joinedload('author'))
-	series = series.options(joinedload('tags'))
-
-	series = series.filter(Story.id==sid)
-
-	series = series.first()
-
-	if g.user.is_authenticated():
-		watch      =       Watches.query.filter(Watches.series_id==sid)     \
-		                                  .filter(Watches.user_id==g.user.id) \
-		                                  .scalar()
-
-		# This is *relatively* optimized, since the query
-		# planner is smart enough to apply the filter before the distinct.
-		# May become a performance issue if the watches table gets large
-		# enough, but I think the performance ceiling will actually
-		# be the number of watches a user has, rather then the
-		# overall table size.
-		watchlists = Watches                                 \
-					.query                                   \
-					.filter(Watches.user_id == g.user.id)    \
-					.distinct(Watches.listname)              \
-					.all()
-		watchlists = [watchitem.listname for watchitem in watchlists]
-		# print(watchlists)
-	else:
-		watch = False
-		watchlists = False
+@app.route('/rate-story/<payload>/')
+def rate_story(payload):
+		return render_template('not-implemented-yet.html')
 
 
-
-	total_watches =       Watches.query.filter(Watches.series_id==sid).count()
-
-	if series is None:
-		return None
-
-	releases = series.releases
-	releases.sort(reverse=True, key=getSort)
-
-
-	latest      = get_latest_release(releases)
-	latest_dict = build_progress(latest)
-	most_recent = get_most_recent_release(releases)
-	latest_str  = format_latest_release(latest)
-
-	if watch:
-		progress    = build_progress(watch)
-	else:
-		progress    = latest_dict
-
-	series.covers.sort(key=get_cover_sorter())
-
-	rating = get_rating(sid)
-
-	if series.tags:
-		similar_series = get_similar_by_tags(sid, series.tags)
-	else:
-		similar_series = []
-
-
-	return series, releases, watch, watchlists, progress, latest, latest_dict, most_recent, latest_str, rating, total_watches, similar_series
+@app.route('/date/')
+def stories_by_date():
+		return render_template('not-implemented-yet.html')
 
 def get_author(sid):
 	author = Author.query.filter(Author.id==sid).first()
@@ -134,13 +72,14 @@ def renderAuthorId(sid, page=1):
 
 	series_entries = series.paginate(page, app.config['SERIES_PER_PAGE'], False)
 
-	return render_template('search_results.html',
+	return render_template('story-list.html',
 						   sequence_item   = series_entries,
 						   page            = page,
 						   name_key        = "title",
 						   page_url_prefix = 'series-id',
-						   searchTarget    = 'Authors',
+						   major_title     = 'Stories by \'{}\''.format(author.name),
 						   searchValue     = author.name,
+						   letter          = None
 						   # wiki            = wiki_views.render_wiki("Author", author.name)
 						   )
 
@@ -156,12 +95,14 @@ def renderTagId(sid, page=1):
 		return redirect(url_for('renderTagTable'))
 
 	series_entries = series.paginate(page, app.config['SERIES_PER_PAGE'], False)
-	return render_template('search_results.html',
+	return render_template('story-list.html',
 						   sequence_item   = series_entries,
 						   page            = page,
 						   name_key        = "title",
 						   page_url_prefix = 'series-id',
 						   searchTarget    = 'Tags',
 						   searchValue     = tag.tag.split("-")[-1],
+						   major_title     = 'Stories with tag \'{}\''.format(tag.tag),
+						   letter          = None
 						   # wiki            = wiki_views.render_wiki("Tag", tag.tag)
 						   )

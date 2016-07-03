@@ -1,5 +1,6 @@
 <!-- extend base layout -->
 {% extends "__base.html" %}
+{% import '_block_stories.html' as story_block %}
 
 {% block content %}
 	{% include '_block_flash.html' %}
@@ -12,7 +13,7 @@
 	<hr class='padded-rule'>
 	<div>
 		<h3>Latest Stories</h3>
-		{% include '_block_stories.html' %}
+		{{ story_block.render_page_contents(recent_stories, name_key) }}
 		<a href='/stories/'>More Stories</a>
 	</div>
 
@@ -21,13 +22,7 @@
 	{% set show_group = False %}
 	<div>
 		<h4>A few random series</h4>
-		{% for post in random_series %}
-			<div class="well well-tny">
-
-				<a href='/series-id/{{ post.id }}/'>{{ post.title }}</a>
-
-			</div>
-		{% endfor %}
+		{{ story_block.render_page_contents(random_stories, name_key) }}
 	</div>
 
 	<hr class='padded-rule'>

@@ -18,11 +18,11 @@ def get_highest_rated(page):
 		.group_by(Ratings.series_id).subquery()
 
 
-	have = Series.query.join(ratings, Series.id == ratings.c.series_id) \
+	have = Story.query.join(ratings, Story.id == ratings.c.series_id) \
 		.add_column(ratings.c.rating) \
 		.add_column(ratings.c.rating_count) \
 		.filter(ratings.c.rating_count > 1) \
-		.order_by(desc(ratings.c.rating), Series.title)
+		.order_by(desc(ratings.c.rating), Story.title)
 
 
 	watch_entries = have.paginate(page, app.config['SERIES_PER_PAGE'], False)
@@ -37,11 +37,11 @@ def get_most_rated(page):
 		.group_by(Ratings.series_id).subquery()
 
 
-	have = Series.query.join(ratings, Series.id == ratings.c.series_id) \
+	have = Story.query.join(ratings, Story.id == ratings.c.series_id) \
 		.add_column(ratings.c.rating) \
 		.add_column(ratings.c.rating_count) \
 		.filter(ratings.c.rating_count > 1) \
-		.order_by(desc(ratings.c.rating_count), Series.title)
+		.order_by(desc(ratings.c.rating_count), Story.title)
 
 
 	watch_entries = have.paginate(page, app.config['SERIES_PER_PAGE'], False)
@@ -62,7 +62,7 @@ def renderMostRated(page=1):
 						   sequence_item   = get_most_rated(page),
 						   page_mode       = "ratings",
 						   page            = page,
-						   title           = 'Most Watched Series',
+						   title           = 'Most Watched Stories',
 						   footnote        = None,
 						   )
 
@@ -77,7 +77,7 @@ def renderHighestRated(page=1):
 						   sequence_item   = get_highest_rated(page),
 						   page_mode       = "ratings",
 						   page            = page,
-						   title           = 'Highest Rated Series',
-						   footnote        = 'Series only rated by one person are excluded from this list.',
+						   title           = 'Highest Rated Stories',
+						   footnote        = 'Stories only rated by one person are excluded from this list.',
 						   )
 

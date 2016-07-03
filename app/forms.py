@@ -48,14 +48,6 @@ class LoginForm(Form):
 			loginError()
 
 
-# class NewReleaseForm(Form):
-# 	series_id   = HiddenField('series')
-# 	is_oel      = HiddenField('is_oel')
-# 	release_pg  = StringField('Release URL', [URL(message='You must supply a link to the released chapter/volume.')])
-# 	releasetime = DateTimeField('Release Date', format='%Y/%m/%d %H:%M')
-
-
-
 class PostForm(Form):
 	title = StringField('Title', validators=[DataRequired(), Length(max=128)])
 	content = TextAreaField('Content', validators=[DataRequired()])

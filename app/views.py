@@ -114,7 +114,9 @@ def internal_error(dummy_error):
 
 
 def get_random_books():
-	items = Story.query.order_by(func.random()).limit(5)
+	# items = Story.query.order_by(func.random()).limit(5)
+	items = release_views.get_releases(1, per_page=5, order_by=func.random())
+	print("random items", items)
 	return items
 
 
@@ -125,15 +127,10 @@ def get_news():
 	return newsPost
 
 def get_release_feeds():
-	q = Story.query
+	items = release_views.get_releases(1, per_page=20)
 
-	q = q.order_by(desc(Story.pub_date))
-	q = q.options(joinedload('tags'))
-	q = q.options(joinedload('genres'))
-	q = q.options(joinedload('author'))
-	q = q.limit(20)
-
-	return q.all()
+	return items
+	# return q.all()
 
 
 @app.route('/', methods=['GET'])
@@ -141,13 +138,12 @@ def get_release_feeds():
 # @login_required
 def index():
 	return render_template('index.html',
-						   title               = 'Home',
-						   random_series       = get_random_books(),
-						   news                = get_news(),
-						   release_items       = get_release_feeds(),
+						   title          = 'Home',
+						   random_stories = get_random_books(),
+						   news           = get_news(),
+						   recent_stories = get_release_feeds(),
+						   name_key       = "title",
 						   )
-
-
 
 
 @app.route('/favicon.ico')
@@ -159,6 +155,27 @@ def sendFavIcon():
 
 
 
+@app.route('/get-story/<int:cid>/')
+def renderStoryContent(cid):
+	# TODO: Add a "not found" thing
+	cover = Story.query.filter(Story.id==cid).scalar()
+	if not cover:
+		flash(gettext('Story not found in database! Wat?'))
+		return redirect(url_for('index'))
+
+	covpath = os.path.join(app.config['FILE_BACKEND_PATH'], cover.fspath)
+	if not os.path.exists(covpath):
+		print("Cover not found! '%s'" % covpath)
+		flash(gettext('Cover file is missing!'))
+		return redirect(url_for('index'))
+
+	print("Filename: ", cover.srcfname)
+	return send_file(
+		covpath,
+		attachment_filename=cover.srcfname,
+		conditional=True,
+		as_attachment=True,
+		)
 
 # @app.route('/edit', methods=['GET', 'POST'])
 # @login_required

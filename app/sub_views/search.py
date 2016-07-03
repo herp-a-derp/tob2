@@ -16,20 +16,21 @@ import collections
 
 def title_search(searchterm, page=1):
 	searchtermclean = bleach.clean(searchterm, strip=True)
-	searchterm = nt.prepFilenameForMatching(searchtermclean)
+	# searchterm = nt.prepFilenameForMatching(searchtermclean)
+	searchterm = searchtermclean
 
 	if not searchterm:
 		return render_template('not-implemented-yet.html', message='No search term entered (or search term collapsed down to nothing).')
 
-	similarity = Function('similarity', AlternateNames.cleanname, (searchterm))
+	similarity = Function('similarity', Story.title, (searchterm))
 	query = select(
-			[AlternateNames.series, AlternateNames.cleanname, AlternateNames.name, similarity],
-			from_obj=[AlternateNames],
+			[Story.id, Story.title, similarity],
+			from_obj=[Story],
 			order_by=desc(similarity)
 		).where(
 			or_(
-				AlternateNames.cleanname.op("%%")(searchterm),
-				AlternateNames.cleanname.like(searchterm + "%%")
+				Story.title.op("%%")(searchterm),
+				Story.title.like(searchterm + "%%")
 				)
 		).limit(
 			50
@@ -38,34 +39,6 @@ def title_search(searchterm, page=1):
 	results = db.session.execute(query).fetchall()
 
 	data = collections.OrderedDict()
-
-	uid = g.user.get_id()
-	for result in results:
-		dbid = result[0]
-		if not dbid in data:
-			data[dbid] = {}
-			data[dbid]['row'] = Story.query.filter(Story.id==dbid).one()
-			if uid:
-				data[dbid]['watch'] = Watches            \
-						.query                           \
-						.filter(Watches.series_id==dbid) \
-						.filter(Watches.user_id==uid)    \
-						.scalar()
-			else:
-				data[dbid]['watch'] = []
-
-			data[dbid]['results'] = []
-		# We only care about relative ordering, and
-		# since we're ordered when we iterate, if we
-		# just append here, things will stay in the correct
-		# order.
-		data[dbid]['results'].append(result)
-
-
-
-	# print(results)
-	# print(data)
-
 
 	return render_template('text-search.html',
 					   results         = data,

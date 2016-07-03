@@ -11,14 +11,14 @@ from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
 
-def get_releases(page):
+def get_releases(page, per_page=app.config['SERIES_PER_PAGE'], order_by=desc(Story.pub_date)):
 	releases = Story.query
-	releases = releases.order_by(desc(Story.pub_date))
+	releases = releases.order_by(order_by)
 
 	# Join on the series entry. Cuts the total page-rendering queries in half.
 	releases = releases.options(joinedload('tags'))
 	releases = releases.options(joinedload('author'))
-	releases = releases.paginate(page, app.config['SERIES_PER_PAGE'], False)
+	releases = releases.paginate(page, per_page, False)
 	return releases
 
 
@@ -37,5 +37,5 @@ def renderReleasesTable(letter=None, page=1):
 						   path_name       = "stories",
 						   name_key        = "title",
 						   page_url_prefix = 'stories',
-						   # title           = 'Authors',
+						   major_title     = 'Stories',
 						   )

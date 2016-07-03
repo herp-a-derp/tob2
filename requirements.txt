@@ -10,6 +10,7 @@ defusedxml
 Flask-Babel
 Flask-Bcrypt
 Flask-DebugToolbar
+cherrypy
 Flask-Login
 Flask-Mail
 Flask-Migrate
