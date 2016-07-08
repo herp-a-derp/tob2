@@ -1,0 +1,78 @@
+<!-- extend base layout -->
+{% extends "__base.html" %}
+{% block header %}
+<style>
+	input {
+		display: table-cell !important;
+		vertical-align: middle;
+	}
+</style>
+{% endblock %}
+{% block content %}
+	{% include '_block_flash.html' %}
+	<div class="well well-large" style="min-height: 140px;">
+		<h2>Reviews for: <a href="/get-story/{{story.id}}/">{{ story.title }}</a></h2>
+
+		<form method="POST" action="{{request.path}}">
+			<div class="well well-xs" >
+				{{ form.hidden_tag() }}
+				<table class='table-striped table table-bordered table-condensed fullwidth'>
+					<tr>
+						<td>
+							<div class="form-inline">
+								{{ form.nickname.label(style='margin:6px') }}</span>
+								{{ form.nickname(size=60, class_="form-control form-inline pull-right") }}
+
+								{% if form.nickname.errors %}
+									<ul class="errors">
+										{% for error in form.nickname.errors %}
+											<li>{{ error }}</li>
+										{% endfor %}
+									</ul>
+								{% endif %}
+							</div>
+						</td>
+					</tr>
+					{% for rating_component in [form.overall_rating, form.be_rating, form.chars_rating, form.technical_rating] %}
+						<tr>
+							<td>
+
+								{{ rating_component.label(style='margin:6px') }}
+								<div class='pull-right'>
+									{% for subfield in rating_component %}
+											{{ subfield.label }}: {{ subfield }}{% if not loop.last %}&nbsp;&nbsp;{% endif %}
+									{% endfor %}
+								</div>
+								{% if rating_component.errors %}
+									<ul class="errors">
+										{% for error in rating_component.errors %}
+											<li>{{ error }}</li>
+										{% endfor %}
+									</ul>
+								{% endif %}
+							</td>
+						</tr>
+					{% endfor %}
+					<tr>
+						<td>
+							{{ form.comments.label }}
+							{{ form.comments(size=60, rows=15, class_="form-control") }}
+							{% if form.comments.errors %}
+								<ul class="errors">
+									{% for error in form.comments.errors %}
+										<li>{{ error }}</li>
+									{% endfor %}
+								</ul>
+							{% endif %}
+						</td>
+					</tr>
+					<div>{{message}}</div>
+					</div>
+				</table>
+				<input type="submit" value="Add">
+			</div>
+
+		</form>
+	</div>
+
+{% endblock %}

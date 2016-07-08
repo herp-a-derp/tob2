@@ -36,6 +36,8 @@ class StoryBase(object):
 	fspath      = db.Column(db.Text)
 	hash        = db.Column(db.Text, nullable=False)
 
+	downloads   = db.Column(db.Integer(), default=0)
+
 class TagsBase(object):
 	id          = db.Column(db.Integer, primary_key=True)
 	@declared_attr
@@ -81,6 +83,26 @@ class ModificationInfoMixin(object):
 		return db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
 
 
+class RatingBase(object):
+	id          = db.Column(db.Integer, primary_key=True)
+	nickname    = db.Column(CIText(), nullable=False)
+
+	@declared_attr
+	def user_id(cls):
+		return db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
+	source_ip   = db.Column(db.Text, index=True, nullable=False)
+
+	overall     = db.Column(db.Integer(), nullable=False)
+	be_ctnt     = db.Column(db.Integer(), nullable=False)
+	chars_ctnt  = db.Column(db.Integer(), nullable=False)
+	technical   = db.Column(db.Integer(), nullable=False)
+
+	comments    = db.Column(db.Text(), nullable=False)
+
+	@declared_attr
+	def story(cls):
+		return db.Column(db.Integer, db.ForeignKey('story.id'), index=True, nullable=False)
+
 
 
 
@@ -94,9 +116,10 @@ class Story(db.Model, StoryBase, ModificationInfoMixin):
 	__table_args__ = (
 		db.UniqueConstraint('title'),
 		)
-	tags           = relationship("Tags",   backref='Story', order_by="Tags.tag")
-	genres         = relationship("Genres", backref='Story')
-	author         = relationship("Author", backref='Story')
+	tags           = relationship("Tags",    backref='Story', order_by="Tags.tag")
+	genres         = relationship("Genres",  backref='Story')
+	author         = relationship("Author",  backref='Story')
+	ratings        = relationship("Ratings", backref='Story')
 
 
 
@@ -136,6 +159,40 @@ class Language(db.Model, LanguageBase, ModificationInfoMixin):
 		db.UniqueConstraint('language'),
 		)
 
+class Ratings(db.Model, RatingBase, ModificationInfoMixin):
+	__tablename__ = 'ratings'
+	__table_args__ = (
+		db.UniqueConstraint('story', 'nickname'),
+		db.CheckConstraint('rating >=  0', name='overall'),
+		db.CheckConstraint('rating >=  0', name='be_ctnt'),
+		db.CheckConstraint('rating >=  0', name='chars_ctnt'),
+		db.CheckConstraint('rating >=  0', name='technical'),
+		db.CheckConstraint('rating <= 10', name='overall'),
+		db.CheckConstraint('rating <= 10', name='be_ctnt'),
+		db.CheckConstraint('rating <= 10', name='chars_ctnt'),
+		db.CheckConstraint('rating <= 10', name='technical'),
+		)
+
+
+
+# class Ratings(db.Model):
+# 	id          = db.Column(db.Integer, primary_key=True)
+# 	user_id     = db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
+# 	series_id   = db.Column(db.Integer, db.ForeignKey('story.id'), index=True)
+# 	source_ip   = db.Column(db.Text, index=True)
+
+# 	rating      = db.Column(db.Float(), default=-1)
+
+# 	__table_args__ = (
+# 		db.UniqueConstraint('user_id', 'source_ip', 'series_id'),
+# 		db.CheckConstraint('rating >=  0', name='rating_min'),
+# 		db.CheckConstraint('rating <= 10', name='rating_max'),
+# 		db.CheckConstraint('''(user_id IS NOT NULL AND source_ip IS NULL) OR (user_id IS NULL AND source_ip IS NOT NULL)''', name='rating_src'),
+# 	)
+
+
+# 	series_row       = relationship("Story",         backref='Ratings')
+
 
 class StoryChanges(db.Model, StoryBase, ModificationInfoMixin, ChangeLogMixin):
 	__tablename__ = "serieschanges"
@@ -153,6 +210,10 @@ class AuthorChanges(db.Model, AuthorBase, ModificationInfoMixin, ChangeLogMixin)
 	__tablename__ = "authorchanges"
 	srccol   = db.Column(db.Integer, db.ForeignKey('author.id', ondelete="SET NULL"), index=True)
 
+
+class RatingChanges(db.Model, RatingBase, ModificationInfoMixin, ChangeLogMixin):
+	__tablename__ = "ratingschanges"
+	srccol   = db.Column(db.Integer, db.ForeignKey('ratings.id', ondelete="SET NULL"), index=True)
 
 class LanguageChanges(db.Model, LanguageBase, ModificationInfoMixin, ChangeLogMixin):
 	__tablename__ = "languagechanges"
@@ -309,24 +370,6 @@ class News_Posts(db.Model):
 		return '<Post %r (body size: %s)>' % (self.title, len(self.body))
 
 
-
-class Ratings(db.Model):
-	id          = db.Column(db.Integer, primary_key=True)
-	user_id     = db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
-	series_id   = db.Column(db.Integer, db.ForeignKey('story.id'), index=True)
-	source_ip   = db.Column(db.Text, index=True)
-
-	rating      = db.Column(db.Float(), default=-1)
-
-	__table_args__ = (
-		db.UniqueConstraint('user_id', 'source_ip', 'series_id'),
-		db.CheckConstraint('rating >=  0', name='rating_min'),
-		db.CheckConstraint('rating <= 10', name='rating_max'),
-		db.CheckConstraint('''(user_id IS NOT NULL AND source_ip IS NULL) OR (user_id IS NULL AND source_ip IS NOT NULL)''', name='rating_src'),
-	)
-
-
-	series_row       = relationship("Story",         backref='Ratings')
 
 
 class Users(db.Model):

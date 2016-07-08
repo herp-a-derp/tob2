@@ -14,6 +14,8 @@ from itsdangerous import BadSignature
 from flask_sqlalchemy import get_debug_queries
 from flask_babel import gettext
 from datetime import datetime
+
+import sqlalchemy.exc
 # from guess_language import guess_language
 from app import app
 from app import db
@@ -116,7 +118,7 @@ def internal_error(dummy_error):
 def get_random_books():
 	# items = Story.query.order_by(func.random()).limit(5)
 	items = release_views.get_releases(1, per_page=5, order_by=func.random())
-	print("random items", items)
+	# print("random items", items)
 	return items
 
 
@@ -158,21 +160,32 @@ def sendFavIcon():
 @app.route('/get-story/<int:cid>/')
 def renderStoryContent(cid):
 	# TODO: Add a "not found" thing
-	cover = Story.query.filter(Story.id==cid).scalar()
-	if not cover:
+	story = Story.query.filter(Story.id==cid).scalar()
+	if not story:
 		flash(gettext('Story not found in database! Wat?'))
 		return redirect(url_for('index'))
 
-	covpath = os.path.join(app.config['FILE_BACKEND_PATH'], cover.fspath)
+	while 1:
+		try:
+			if story.downloads is None:
+				story.downloads = 0
+			story.downloads += 1
+			db.session.commit()
+			break
+		except sqlalchemy.exc.IntegrityError:
+			print("Concurrency issue?")
+			db.session.rollback()
+
+	covpath = os.path.join(app.config['FILE_BACKEND_PATH'], story.fspath)
 	if not os.path.exists(covpath):
-		print("Cover not found! '%s'" % covpath)
-		flash(gettext('Cover file is missing!'))
+		print("Story found, but backing file seems to be missing! '%s'" % covpath)
+		flash(gettext('Story found, but backing file seems to be missing! ! PLEASE ! let an admin know!'))
 		return redirect(url_for('index'))
 
-	print("Filename: ", cover.srcfname)
+	print("Filename: ", story.srcfname)
 	return send_file(
 		covpath,
-		attachment_filename=cover.srcfname,
+		attachment_filename=story.srcfname,
 		conditional=True,
 		as_attachment=True,
 		)

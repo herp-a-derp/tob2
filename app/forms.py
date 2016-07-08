@@ -5,6 +5,7 @@ from wtforms import StringField
 from wtforms import BooleanField
 from wtforms import TextAreaField
 from wtforms import PasswordField
+from wtforms import RadioField
 from wtforms import SelectField
 from wtforms import HiddenField
 from wtforms.fields import RadioField
@@ -49,9 +50,32 @@ class LoginForm(Form):
 
 
 class PostForm(Form):
-	title = StringField('Title', validators=[DataRequired(), Length(max=128)])
+	title   = StringField('Title',     validators=[DataRequired(), Length(max=128)])
 	content = TextAreaField('Content', validators=[DataRequired()])
 
+
+ratings = [
+	( 0,  0),
+	( 1,  1),
+	( 2,  2),
+	( 3,  3),
+	( 4,  4),
+	( 5,  5),
+	( 6,  6),
+	( 7,  7),
+	( 8,  8),
+	( 9,  9),
+	(10, 10),
+]
+
+class ReviewForm(Form):
+	nickname         = StringField('Nickname',   validators=[DataRequired(), Length(min=5, max=30)])
+	overall_rating   = RadioField("Overall Rating", choices=ratings)
+	be_rating        = RadioField("BE Content", choices=ratings)
+	chars_rating     = RadioField("Characters", choices=ratings)
+	technical_rating = RadioField("Technical Quality", choices=ratings)
+
+	comments         = TextAreaField('Comments', validators=[DataRequired(), Length(min=5, max=1000)])
 
 class SearchForm(Form):
 	search = StringField('search', validators=[DataRequired()])

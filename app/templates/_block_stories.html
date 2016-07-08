@@ -9,7 +9,7 @@
 							By <a href='/author-id/{{page.author[0].id}}/'>{{page.author[0].name}}</a>
 						</div>
 						<div class='pull-left'>
-							<a href='/rate-story/{{page.id}}/'>Rate this story!</a>
+							<a href='/story-review/{{page.id}}/'>View or add reviews!</a>
 						</div>
 						<center>
 							<strong><a href="/get-story/{{page.id}}/">{{ page[access_key] }}</a></strong>
@@ -23,6 +23,10 @@
 								<span><a href="/tag-id/{{tag.id}}/">{{tag.tag.split("-")[-1]}}</a></span>
 							{% endfor %}
 
+						</div>
+
+						<div class='pull-left'>
+							Downloads: {{page.downloads}}
 						</div>
 					</td>
 
