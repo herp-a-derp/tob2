@@ -113,6 +113,8 @@ class RatingBase(object):
 class Story(db.Model, StoryBase, ModificationInfoMixin):
 	__tablename__ = 'story'
 
+	__searchable__ = ['title']
+
 	__table_args__ = (
 		db.UniqueConstraint('title'),
 		)
