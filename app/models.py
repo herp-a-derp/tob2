@@ -294,7 +294,6 @@ trigger_on = [
 	Tags,
 	Genres,
 	Author,
-	Language,
 ]
 
 def install_trigram_indice_on_column(table, column):
