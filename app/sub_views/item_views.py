@@ -3,8 +3,10 @@ from flask import flash
 from flask import redirect
 from flask import url_for
 from flask import g
+from flask import request
 from flask_babel import gettext
 from app import app
+from app import db
 
 from app.models import Tags
 from app.models import Author
@@ -17,13 +19,27 @@ from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 import datetime
+import bleach
+import markdown
 
 from app.forms import ReviewForm
 
 
-def apply_review(form):
-	print("Applying form: ", form)
-	return render_template('not-implemented-yet.html')
+def apply_review(form, storyid):
+
+	srcip = request.headers.get('X-Forwarded-For') if request.headers.get('X-Forwarded-For') else request.remote_addr
+	new_rating = Ratings(
+			nickname   = bleach.clean(form.nickname.data, tags=[], strip=True),
+			source_ip  = srcip,
+			overall    = int(form.overall_rating.data),
+			be_ctnt    = int(form.be_rating.data),
+			chars_ctnt = int(form.chars_rating.data),
+			technical  = int(form.technical_rating.data),
+			comments   = markdown.markdown(bleach.clean(form.comments.data, strip=True)),
+			story      = storyid,
+		)
+	db.session.add(new_rating)
+	db.session.commit()
 
 @app.route('/story-review/<int:story_id>/', methods=('GET', 'POST'))
 def rate_story(story_id):
@@ -37,17 +53,28 @@ def rate_story(story_id):
 	form = ReviewForm()
 	if form.validate_on_submit():
 		print("Post request. Validating")
-		# if have_auth:
-		if True:
-			print("Validation succeeded!")
-			return apply_review(form)
-		else:
-			flash(gettext('You must be logged in to make changes!'))
+		haverated = Ratings.query                           \
+			.filter(Ratings.nickname == form.nickname.data) \
+			.filter(Ratings.story == story.id)              \
+			.scalar()
+		if haverated:
+			flash(gettext('You seem to have already rated this story!'))
 
+		else:
+			apply_review(form, story.id)
+			flash(gettext('Thanks for giving the author feedback! Your rating has been added'))
+
+	average_ratings = {
+		'overall'    : 0 if len(story.ratings) == 0 else sum([tmp.overall    for tmp in story.ratings]) / len(story.ratings),
+		'be_ctnt'    : 0 if len(story.ratings) == 0 else sum([tmp.be_ctnt    for tmp in story.ratings]) / len(story.ratings),
+		'chars_ctnt' : 0 if len(story.ratings) == 0 else sum([tmp.chars_ctnt for tmp in story.ratings]) / len(story.ratings),
+		'technical'  : 0 if len(story.ratings) == 0 else sum([tmp.technical  for tmp in story.ratings]) / len(story.ratings),
+	}
 	return render_template(
 		'add-view-reviews.html',
-		form=form,
-		story=story,
+		average_ratings = average_ratings,
+		form            = form,
+		story           = story,
 		)
 
 

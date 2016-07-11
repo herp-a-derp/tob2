@@ -18,8 +18,6 @@ def getColor(idx):
 
 
 
-
-
 class ColourHandler(logging.Handler):
 
 	def __init__(self, level=logging.DEBUG):

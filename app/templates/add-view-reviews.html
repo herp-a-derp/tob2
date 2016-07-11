@@ -11,18 +11,62 @@
 {% block content %}
 	{% include '_block_flash.html' %}
 	<div class="well well-large" style="min-height: 140px;">
+		<span class='pull-right'>By <a href='/author-id/{{story.author[0].id}}/'>{{story.author[0].name}}</a></span>
 		<h2>Reviews for: <a href="/get-story/{{story.id}}/">{{ story.title }}</a></h2>
+		<div>
+			<h4>Ratings:</h4>
+			{% if story.ratings %}
+				<div class="container-fluid">
+					<div class='col-md-1'></div>
+					<div class='col-md-4'>
+						<h5>Average ratings</h5>
+						<table class='table-striped table table-bordered table-condensed'>
+							<tr><td>Overall:</td><td>{{average_ratings['overall'] | round(1, 'floor')}}</td></tr>
+							<tr><td>BE Content:</td><td>{{average_ratings['be_ctnt'] | round(1, 'floor')}}</td></tr>
+							<tr><td>Characters:</td><td>{{average_ratings['chars_ctnt'] | round(1, 'floor')}}</td></tr>
+							<tr><td>Technical:</td><td>{{average_ratings['technical'] | round(1, 'floor')}}</td></tr>
+						</table>
+					</div>
+					<div class='col-md-7'></div>
+				</div>
+				<div class='clearfix'></div>
+				{% for rating in story.ratings %}
+					<hr>
+					<div class='well'>
+						<div class="container-fluid">
+							<div class='col-md-8'>
+								<span class='pull-right'>From <strong>{{rating.nickname}}</strong></span>
+								<div class='well'>
+									{{rating.comments | safe}}
+								</div>
+							</div>
+							<div class='col-md-4'>
+								<table class='table-striped table table-bordered table-condensed'>
+									<tr><td>Overall:</td><td>{{rating.overall}}</td></tr>
+									<tr><td>BE Content:</td><td>{{rating.be_ctnt}}</td></tr>
+									<tr><td>Characters:</td><td>{{rating.chars_ctnt}}</td></tr>
+									<tr><td>Technical:</td><td>{{rating.technical}}</td></tr>
+								</table>
+							</div>
+						</div>
+					</div>
+				{% endfor %}
+			{% else %}
+				<center>No ratings! Add your opinion, maybe?</center>
+			{% endif %}
 
+		</div>
 		<form method="POST" action="{{request.path}}">
+			<h4>Rate this story</h4>
 			<div class="well well-xs" >
 				{{ form.hidden_tag() }}
 				<table class='table-striped table table-bordered table-condensed fullwidth'>
 					<tr>
 						<td>
 							<div class="form-inline">
-								{{ form.nickname.label(style='margin:6px') }}</span>
+								{{ form.nickname.label(style='margin:6px') }}
 								{{ form.nickname(size=60, class_="form-control form-inline pull-right") }}
-
+								<span class='notetext '>Min 5 chars, Max 60 chars</span>
 								{% if form.nickname.errors %}
 									<ul class="errors">
 										{% for error in form.nickname.errors %}
@@ -39,9 +83,7 @@
 
 								{{ rating_component.label(style='margin:6px') }}
 								<div class='pull-right'>
-									{% for subfield in rating_component %}
-											{{ subfield.label }}: {{ subfield }}{% if not loop.last %}&nbsp;&nbsp;{% endif %}
-									{% endfor %}
+									{{rating_component(class_="form-control form-inline pull-right")}}
 								</div>
 								{% if rating_component.errors %}
 									<ul class="errors">
@@ -55,6 +97,7 @@
 					{% endfor %}
 					<tr>
 						<td>
+							<span class='notetext pull-right'>Min 30 chars, Max 1000 chars. No HTML allowed. Text will be processed with <a href="https://help.github.com/articles/basic-writing-and-formatting-syntax/">markdown</a></span>
 							{{ form.comments.label }}
 							{{ form.comments(size=60, rows=15, class_="form-control") }}
 							{% if form.comments.errors %}

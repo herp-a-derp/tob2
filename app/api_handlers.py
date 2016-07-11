@@ -6,6 +6,7 @@ from app.models import Tags
 from app.models import Author
 # from app.models import Genres
 from flask import g
+from flask import flash
 import markdown
 import bleach
 import os.path
@@ -175,9 +176,25 @@ def addStory(updateDat):
 	if have:
 		return getResponse("A story with that name already exists! Are you accidentally adding a duplicate?", True)
 
+
+	if len(story['name']) > 80:
+		return getResponse("Maximum story title length is 80 characters!", True)
+	if len(story['name']) < 3:
+		return getResponse("Minimum story title length is 3 characters!", True)
+	if len(story['auth']) < 5:
+		return getResponse("Minimum story author name length is 5 characters!", True)
+	if len(story['auth']) > 60:
+		return getResponse("Maximum story author name length is 60 characters!", True)
+	if len(story['desc']) < 30:
+		return getResponse("Minimum story description length is 30 characters!", True)
+	if len(story['desc']) > 500:
+		return getResponse("Maximum story description length is 500 characters!", True)
+
+
 	covpath = saveFile(data.data, story['fname'])
 
 	stags = ["-".join(itm_tags) for itm_tags in story['tags']]
+	stags = [bleach.clean(tag, tags=[], strip=True) for tag in stags]
 
 	print("Author: ", story['auth'])
 	print("stags: ", stags)
@@ -194,8 +211,10 @@ def addStory(updateDat):
 		)
 
 	[new.tags.append(Tags(tag=tag)) for tag in stags]
-	new.author.append(Author(name=story['auth']))
+	new.author.append(Author(name=bleach.clean(story['auth'], tags=[], strip=True)))
 
 	db.session.add(new)
 	db.session.commit()
+
+	flash('Your story has been added! Thanks for posting your content!')
 	return getResponse("Story added", error=False)

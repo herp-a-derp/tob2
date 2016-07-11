@@ -9,7 +9,6 @@ from wtforms import RadioField
 from wtforms import SelectField
 from wtforms import HiddenField
 from wtforms.fields import RadioField
-from wtforms.fields.html5 import DateTimeField
 from wtforms.validators import DataRequired
 from wtforms.validators import Length
 from wtforms.validators import Email
@@ -55,27 +54,27 @@ class PostForm(Form):
 
 
 ratings = [
-	( 0,  0),
-	( 1,  1),
-	( 2,  2),
-	( 3,  3),
-	( 4,  4),
-	( 5,  5),
-	( 6,  6),
-	( 7,  7),
-	( 8,  8),
-	( 9,  9),
-	(10, 10),
+	('10', '10'),
+	( '9',  '9'),
+	( '8',  '8'),
+	( '7',  '7'),
+	( '6',  '6'),
+	( '5',  '5'),
+	( '4',  '4'),
+	( '3',  '3'),
+	( '2',  '2'),
+	( '1',  '1'),
+	( '0',  '0'),
 ]
 
 class ReviewForm(Form):
-	nickname         = StringField('Nickname',   validators=[DataRequired(), Length(min=5, max=30)])
-	overall_rating   = RadioField("Overall Rating", choices=ratings)
-	be_rating        = RadioField("BE Content", choices=ratings)
-	chars_rating     = RadioField("Characters", choices=ratings)
-	technical_rating = RadioField("Technical Quality", choices=ratings)
+	nickname         = StringField('Nickname',          validators=[DataRequired(), Length(min=5, max=60)])
+	overall_rating   = SelectField("Overall Rating",    choices=ratings)
+	be_rating        = SelectField("BE Content",        choices=ratings)
+	chars_rating     = SelectField("Characters",        choices=ratings)
+	technical_rating = SelectField("Technical Quality", choices=ratings)
 
-	comments         = TextAreaField('Comments', validators=[DataRequired(), Length(min=5, max=1000)])
+	comments         = TextAreaField('Comments', validators=[DataRequired(), Length(min=30, max=1000)])
 
 class SearchForm(Form):
 	search = StringField('search', validators=[DataRequired()])

@@ -10,18 +10,21 @@
 			<div class="well well-xs" >
 				<div class="row storydiv">
 					<div class="form-group">
+						<span class='notetext pull-right'>Min 3 chars, Max 80 chars</span>
 						<label for="title">Title</label>
 						<input id="story-title" name="title" size="60" maxlength="80" class="form-control" type="text" value="">
 
 
 					</div>
 					<div class="form-group">
+						<span class='notetext pull-right'>Min 5 chars, Max 60 chars</span>
 						<label for="author">Author</label>
-						<input id="story-author" name="author" size="60" maxlength="80" class="form-control" type="text" value="">
+						<input id="story-author" name="author" size="60" maxlength="60" class="form-control" type="text" value="">
 
 
 					</div>
 					<div class="form-group">
+						<span class='notetext pull-right'>Min 30 chars, Max 500 chars. No HTML allowed. Text will be processed with <a href="https://help.github.com/articles/basic-writing-and-formatting-syntax/">markdown</a>.</span>
 						<label for="description">Story Description</label>
 						<textarea id="story-description" name="description" class="form-control" rows="7" size="60" maxlength="500"></textarea>
 
@@ -151,27 +154,22 @@
 			reader.readAsDataURL(files[0]);
 		}
 
-		function saveCallback()
-		{
-			return function(result)
-			{
-				console.log("Save callback!")
-				if (!result.hasOwnProperty("error"))
-				{
-					console.log("No error result?")
-				}
-				if (result['error'])
-				{
-					alert("Error on update!\n\n"+result["message"])
-				}
-				else
-				{
-					location.reload();
-				}
-				console.log(result)
 
-			}
+		function content_load_cb(data, textStatus, jqXHR)
+		{
+			console.log("Response: ", data)
+			if (data['error'] == false)
+				window.location = '/';
+			else
+				alert("Error when adding story!\nError: " + data['message']);
+		};
+
+		function content_load_fail(jqXHR, textStatus, errorThrown)
+		{
+			alert("Error when uploading file!\nError: " + errorThrown + "\nStatus text: " + textStatus);
 		}
+
+
 
 		function add_story()
 		{
@@ -232,12 +230,13 @@
 
 
 			$.ajax({
-				url : "/api",
-				success : saveCallback(),
-				data: JSON.stringify(params),
-				method: "POST",
-				dataType: 'json',
-				contentType: "application/json;",
+				url         : "/api",
+				success     : content_load_cb,
+				error       : content_load_fail,
+				data        : JSON.stringify(params),
+				method      : "POST",
+				dataType    : 'json',
+				contentType : "application/json;",
 			});
 
 		}
