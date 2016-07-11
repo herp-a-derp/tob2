@@ -35,19 +35,7 @@ def install_tgm_idx():
 	'''
 	print("Installing trigram indices")
 	models.install_trigram_indices()
-# This is also true for my indexes, since they use postgres specific extensions.
-@manager.command
-def install_enum():
-	'''
-	Install enum type in db
-	'''
-	print("Installing enum indices")
-	db.engine.begin()
-	conn = db.engine.connect()
-	models.install_region_enum(conn)
-	models.install_tl_type_enum(conn)
 
-	print("Done")
 
 manager.add_command('db', MigrateCommand)
 

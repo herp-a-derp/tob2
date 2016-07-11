@@ -197,7 +197,7 @@ class Ratings(db.Model, RatingBase, ModificationInfoMixin):
 
 
 class StoryChanges(db.Model, StoryBase, ModificationInfoMixin, ChangeLogMixin):
-	__tablename__ = "serieschanges"
+	__tablename__ = "storychanges"
 	srccol   = db.Column(db.Integer, db.ForeignKey('story.id', ondelete="SET NULL"), index=True)
 
 class TagsChanges(db.Model, TagsBase, ModificationInfoMixin, ChangeLogMixin):
