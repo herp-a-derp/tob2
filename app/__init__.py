@@ -66,7 +66,9 @@ if not app.debug:
 
 
 
-from app import views, models
+from app import views
+from app import models
+from app import tag_definitions
 # from .models import Users, Translators
 
 CACHE_SIZE = 5000
@@ -101,8 +103,30 @@ def utility_processor():
 
 
 	def format_date(value, format='medium'):
-
 		return format_datetime(value, "EE yyyy.MM.dd")
+
+	def get_tag_list():
+		ret = []
+		for key, tag_tup in tag_definitions.TAGS.items():
+			tag_cat, tag_dict = tag_tup
+			tmp = []
+			for subkey, definition_tup in tag_dict.items():
+				tmp.append((key, subkey, definition_tup[0]))
+			tmp.sort()
+			ret.append((tag_cat, tmp))
+		ret.sort(key=lambda x: (len(x[1]), x[0]))
+		return ret
+
+	def get_tag_definition(tagstr):
+		taglut = {}
+		for key, tag_tup in tag_definitions.TAGS.items():
+			tag_cat, tag_dict = tag_tup
+			for subkey, definition_tup in tag_dict.items():
+				if key+'-'+subkey == tagstr:
+					return '%s - %s' % (tag_cat, definition_tup[0])
+
+		return "Unknown tag: '%s'" % tagstr
+
 
 	def date_now():
 		return format_datetime(datetime.datetime.today(), "yyyy/MM/dd, hh:mm:ss")
@@ -187,6 +211,8 @@ def utility_processor():
 			staleness_factor   = staleness_factor,
 			build_query_string = build_qs,
 			build_name_qs      = build_name_qs,
+			get_tag_definition = get_tag_definition,
+			get_tag_list       = get_tag_list
 			)
 
 

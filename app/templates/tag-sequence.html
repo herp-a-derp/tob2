@@ -3,7 +3,21 @@
 {% import "_block_paginate.html" as paginator %}
 {% import "_sequence_tools.html" as sequence %}
 
+{% macro render_page_contents(prefix, pagination, access_key) %}
 
+	<table class='table-striped table table-bordered table-condensed fullwidth'>
+		{%- for page in pagination.items %}
+			<tr>
+				<td>
+					<a href="/{{prefix}}/{{page.id}}/">{{ page[access_key] }}</a>
+					<span class='pull-right'>{{ get_tag_definition(page[access_key]) }}</span>
+				</td>
+
+			</tr>
+		{%- endfor %}
+	</table>
+
+{% endmacro %}
 
 {% extends "__base.html" %}
 
@@ -35,7 +49,7 @@
 		{% if sequence_item.items %}
 
 			<div>
-				{{ sequence.render_page_contents(page_url_prefix, sequence_item, name_key) }}
+				{{ render_page_contents(page_url_prefix, sequence_item, name_key) }}
 			</div>
 			{{ paginator.render_pagination(sequence_item) }}
 		{% else %}

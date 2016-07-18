@@ -149,13 +149,15 @@ def renderTagId(sid, page=1):
 		return redirect(url_for('renderTagTable'))
 
 	series_entries = series.paginate(page, app.config['SERIES_PER_PAGE'], False)
-	return render_template('story-list.html',
+	return render_template('tag-list.html',
 						   sequence_item   = series_entries,
 						   page            = page,
 						   name_key        = "title",
 						   page_url_prefix = 'series-id',
 						   searchTarget    = 'Tags',
+						   path_name       = "tag-id",
 						   searchValue     = tag.tag.split("-")[-1],
+						   tag             = tag,
 						   major_title     = 'Stories with tag \'{}\''.format(tag.tag),
 						   letter          = None
 						   # wiki            = wiki_views.render_wiki("Tag", tag.tag)

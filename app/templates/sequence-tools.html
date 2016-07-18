@@ -1,0 +1,26 @@
+
+{% macro render_page_contents(prefix, pagination, access_key) %}
+
+	<table class='table-striped table table-bordered table-condensed fullwidth'>
+		{%- for page in pagination.items %}
+			<tr>
+				<td>
+					<a href="/{{prefix}}/{{page.id}}/">{{ page[access_key] }}</a>
+
+				</td>
+
+			</tr>
+		{%- endfor %}
+	</table>
+
+{% endmacro %}
+
+
+{% macro render_alphanum_div(prefix) %}
+	<div class='pull-right'>
+		Prefix:
+		{%- for letter in '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' %}
+			<a href="/{{prefix}}/{{letter}}/1">{{ letter | upper }}</a>
+		{%- endfor %}
+	</div>
+{% endmacro %}

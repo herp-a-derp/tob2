@@ -67,7 +67,7 @@ def get_tag_entries(letter, page):
 def renderTagTable(letter=None, page=1):
 
 
-	return render_template('sequence.html',
+	return render_template('tag-sequence.html',
 						   sequence_item   = get_tag_entries(letter, page),
 						   page            = page,
 						   letter          = letter,

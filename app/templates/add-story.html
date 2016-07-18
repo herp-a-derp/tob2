@@ -36,72 +36,18 @@
 					<div class="form-group">
 						<label >Story tags:</label>
 						<div>
-							<div class='col-md-6'>
-								<strong>Speed</strong>
-								<ul>
-									<li><input class='story-tag' type="checkbox" name="speed" value="slow">Slow Growth (hours/days)
-									<li><input class='story-tag' type="checkbox" name="speed" value="medium">Growth measured in minutes
-									<li><input class='story-tag' type="checkbox" name="speed" value="instant">Instant growth
-								</ul>
-							</div>
-							<div class='col-md-6'>
-								<strong>Cause</strong>
-								<ul>
-									<li><input class='story-tag' type="checkbox" name="cause" value="magic">Magic</li>
-									<li><input class='story-tag' type="checkbox" name="cause" value="chemical">Chemical</li>
-									<li><input class='story-tag' type="checkbox" name="cause" value="science">Science</li>
-								</ul>
-							</div>
-							<div class='col-md-6'>
-								<strong>Other Growth</strong>
-								<ul>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="ag">Ass Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="fg">Fat Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="gts">Giantess</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="hg">Hair Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="lg">Leg Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="mg">Muscle Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="mmg">Male Muscle Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="mpg">Male Penis Growth</li>
-									<li><input class='story-tag' type="checkbox" name="other-g" value="mult">Multiple Breasts (more than 2)</li>
-								</ul>
-							</div>
-							<div class='col-md-6'>
-								<strong>Amount of Growth</strong>
-								<ul>
-									<li><input class='story-tag' type="checkbox" name="size" value="big">Large but realistic size</li>
-									<li><input class='story-tag' type="checkbox" name="size" value="huge">Unrealistically huge</li>
-									<li><input class='story-tag' type="checkbox" name="size" value="wow">Room-filling or larger</li>
-								</ul>
-							</div>
-							<div class='col-md-6'>
-								<strong>Gender Change</strong>
-								<ul>
-									<li><input class='story-tag' type="checkbox" name="tg" value="ftm">Female to Male</li>
-									<li><input class='story-tag' type="checkbox" name="tg" value="mtf">Male to Female</li>
-								</ul>
-							</div>
-							<div class='col-md-6'>
-								<strong>Other Story Attributes</strong>
-								<ul>
-									<li><input class='story-tag' type="checkbox" name="other" value="aliens">Extraterrestrial participation</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="ar">Age Regression</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="bond">Bondage</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="rip">Clothes Burst/Rip</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="hyp">Hypnosis</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="inc">Incest</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="lac">Lactation</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="ment">Mental transformation</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="nc">Non-consensual</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="offstage">Events occur offstage</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="preg">Pregnancy</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="rc">Remote-Controlled</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="sc">Self-Controlled</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="shem">She-Male</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="weird">Weird transformations</li>
-									<li><input class='story-tag' type="checkbox" name="other" value="asleep">While subject is sleeping</li>
-								</ul>
-							</div>
+							{% for tag_category, tag_tuple_list in get_tag_list() %}
+
+								<div class='col-md-6'>
+									<strong>{{tag_category}}</strong>
+									<ul>
+										{% for tag_name, tag_value, tag_text in tag_tuple_list %}
+											<li><input class='story-tag' type="checkbox" name="{{tag_name}}" value="{{tag_value}}">{{tag_text}}</li>
+										{% endfor %}
+									</ul>
+								</div>
+							{% endfor %}
+
 						</div>
 					</div>
 				</div>
