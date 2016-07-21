@@ -58,6 +58,7 @@ TAGS = {
 				"shem"     : ("She-Male", ),
 				"weird"    : ("Weird transformations", ),
 				"asleep"   : ("While subject is sleeping", ),
+				"fanfic"   : ("The story is fan-fiction using existing characters.", ),
 			}
 		)
 }
