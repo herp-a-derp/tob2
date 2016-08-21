@@ -40,6 +40,8 @@ python-bcrypt
 python-dateutil
 python-levenshtein
 pytz
+beautifulsoup4
+lxml
 six
 speaklater
 SQLAlchemy

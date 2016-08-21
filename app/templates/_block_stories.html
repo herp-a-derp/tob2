@@ -17,6 +17,7 @@
 							<div class='well well-sm' style='margin:10px'>
 								{{page.description | safe}}
 							</div>
+						<div class='clearfix'></div>
 						<div class='pull-right'>
 							Tags:
 							{% for tag in page.tags %}
@@ -28,6 +29,7 @@
 						<div class='pull-left'>
 							Downloads: {{page.downloads}}
 						</div>
+						<div class='text-center'>{{ page.pub_date | format_date }} - {{ page.pub_date | terse_ago }} ago</div>
 					</td>
 
 				</tr>

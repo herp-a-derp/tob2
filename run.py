@@ -38,7 +38,7 @@ def go():
 	# Instantiate a new server object
 	server = cherrypy._cpserver.Server()
 	# Configure the server object
-	if "all" in sys.argv:
+	if "all" in sys.argv or "debug" in sys.argv :
 		server.socket_host = "0.0.0.0"
 	else:
 		server.socket_host = "127.0.0.1"
