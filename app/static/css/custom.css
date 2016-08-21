@@ -27,6 +27,11 @@
 		padding: 10px;
 	}
 }
+@media (min-width: 992px)
+{
+	.text-right-wide{text-align:right};
+	.text-center-wide{text-align:center};
+}
 
 
 .col-sm-9-5, .col-sm-2-5 {
