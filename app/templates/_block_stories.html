@@ -6,13 +6,13 @@
 				<tr>
 					<td>
 						<div class="row">
-							<div class='col-md-4'>
+							<div class='col-md-3'>
 								<a href='/story-review/{{page.id}}/'>View or add reviews!</a>
 							</div>
-							<div class='col-md-4 text-center-wide'>
+							<div class='col-md-6 text_center_wide'>
 								<strong><a href="/get-story/{{page.id}}/">{{ page[access_key] }}</a></strong>
 							</div>
-							<div class='col-md-4 text-right-wide'>
+							<div class='col-md-3 text_right_wide'>
 								By <a href='/author-id/{{page.author[0].id}}/'>{{page.author[0].name}}</a>
 							</div>
 
@@ -28,7 +28,7 @@
 							</div>
 							<div class='col-md-3'>{{ page.pub_date | format_date }} - {{ page.pub_date | terse_ago }} ago</div>
 
-							<div class='col-md-7 text-right-wide'>
+							<div class='col-md-7 text_right_wide'>
 								Tags:
 								{% for tag in page.tags %}
 									<span><a href="/tag-id/{{tag.id}}/">{{tag.tag.split("-")[-1]}}</a></span>

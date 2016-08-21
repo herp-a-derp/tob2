@@ -27,10 +27,17 @@
 		padding: 10px;
 	}
 }
+
 @media (min-width: 992px)
 {
-	.text-right-wide{text-align:right};
-	.text-center-wide{text-align:center};
+	.text_center_wide
+	{
+		text-align: center;
+	}
+	.text_right_wide
+	{
+		text-align: right;
+	}
 }
 
 
