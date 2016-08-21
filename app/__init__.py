@@ -207,16 +207,6 @@ def utility_processor():
 		qs = urllib.parse.urlencode(args)
 		return qs
 
-
-
-	print()
-	print()
-	print("Context processor!")
-	print()
-	print()
-
-
-
 	return {
 			'getUserId'          : getUserId,
 			'getTlGroupId'       : getTlGroupId,
