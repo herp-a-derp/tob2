@@ -59,6 +59,7 @@ TAGS = {
 				"weird"    : ("Weird transformations", ),
 				"asleep"   : ("While subject is sleeping", ),
 				"fanfic"   : ("The story is fan-fiction using existing characters.", ),
+				"furry"    : ("The story contains 'furry' or anthropomorphized animal characters..", ),
 			}
 		)
 }
