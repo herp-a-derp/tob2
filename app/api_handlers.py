@@ -184,7 +184,7 @@ def addStory(updateDat):
 			print("Have story with that name ('%s')!" % story['name'])
 			story['name'] = orig_name + " (%s)" % loop
 			have = Story.query.filter(Story.title == story['name']).scalar()
-
+			loop += 1
 		print("Story added with number in name: '%s'" % story['name'])
 
 

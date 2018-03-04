@@ -36,6 +36,8 @@ class StoryBase(object):
 	fspath      = db.Column(db.Text)
 	hash        = db.Column(db.Text, nullable=False)
 
+	story_html  = db.Column(db.Text())
+
 	downloads   = db.Column(db.Integer(), default=0)
 
 class TagsBase(object):
