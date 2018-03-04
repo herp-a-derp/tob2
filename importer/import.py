@@ -1,6 +1,6 @@
 
 
-import pprint
+import tqdm
 import os
 import os.path
 import logging
@@ -12,13 +12,18 @@ import pytz
 import pickle
 import dateutil.parser
 from util import webFunctions
+
 import settings
+import app.api_handlers
+import app
+
+from datauri import DataURI
 
 class Walker():
 	sourceurl = "http://overflowingbra.com/ding.htm?dates=%d"
 
 	year_min = 1998
-	year_max = 2016
+	year_max = 2018
 
 	yearpik_name = "stories_for_year_%s.pik"
 	aggpik_name  = "stories_all.pik"
@@ -116,6 +121,44 @@ class Walker():
 		for item in items:
 			types.add(item['file']['mime'])
 		print(types)
+
+
+		for item in tqdm.tqdm(items):
+			self.check_add(item)
+
+	def check_add(self, item):
+
+		if not 'file' in item:
+			return
+
+		if ';' in item['file']['mime']:
+			item['file']['mime'] = item['file']['mime'].split(";")[0]
+
+		story = {
+			'name'    : item['title'],
+			'auth'    : item['author'],
+			'tags'    : item['tags'],
+			'desc'    : item['desc'],
+			'ul_date' : item['uldate'],
+
+			'fname'   : item['file']['name'],
+			'file'    : DataURI.make(mimetype=item['file']['mime'], charset=None, base64=True, data=item['file']['file']),
+		}
+
+		# print(item['tags'])
+		# print(item['file'])
+		assert 'name' in story
+		assert 'auth' in story
+		assert 'fname' in story
+		assert 'file' in story
+		assert 'desc' in story
+		assert 'tags' in story
+
+
+		with app.app.test_request_context():
+			app.api_handlers.addStory({'story' : story})
+
+
 def go():
 	walker = Walker()
 	print(walker)

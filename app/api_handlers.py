@@ -12,7 +12,7 @@ import bleach
 import os.path
 import os
 import hashlib
-from data_uri import DataURI
+from datauri import DataURI
 from flask_login import current_user
 import datetime
 import dateutil.parser
@@ -125,7 +125,7 @@ def saveFile(filecont, filename):
 
 	locpath = fqpath[len(confpath):]
 	if not os.path.exists(fqpath):
-		print("Saving cover file to path: '{fqpath}'!".format(fqpath=fqpath))
+		# print("Saving cover file to path: '{fqpath}'!".format(fqpath=fqpath))
 		with open(fqpath, "wb") as fp:
 			fp.write(filecont)
 	else:
@@ -158,6 +158,8 @@ def addStory(updateDat):
 	assert 'story' in updateDat
 	story = updateDat['story']
 
+
+
 	assert 'name' in story
 	assert 'auth' in story
 	assert 'fname' in story
@@ -169,12 +171,21 @@ def addStory(updateDat):
 
 	dathash = getHash(data.data).lower()
 	have = Story.query.filter(Story.hash == dathash).scalar()
+
 	if have:
+		# print("Have file already!")
 		return getResponse("A file with that MD5 hash already exists! Are you accidentally adding a duplicate?", True)
 
 	have = Story.query.filter(Story.title == story['name']).scalar()
 	if have:
-		return getResponse("A story with that name already exists! Are you accidentally adding a duplicate?", True)
+		orig_name = story['name']
+		loop = 2
+		while have:
+			print("Have story with that name ('%s')!" % story['name'])
+			story['name'] = orig_name + " (%s)" % loop
+			have = Story.query.filter(Story.title == story['name']).scalar()
+
+		print("Story added with number in name: '%s'" % story['name'])
 
 
 	if len(story['name']) > 80:
@@ -191,23 +202,28 @@ def addStory(updateDat):
 		return getResponse("Maximum story description length is 500 characters!", True)
 
 
-	covpath = saveFile(data.data, story['fname'])
+	fspath = saveFile(data.data, story['fname'])
 
-	stags = ["-".join(itm_tags) for itm_tags in story['tags']]
+	stags = ["-".join(itm_tags.split(" ")) for itm_tags in story['tags']]
 	stags = [bleach.clean(tag, tags=[], strip=True) for tag in stags]
 
-	print("Author: ", story['auth'])
-	print("stags: ", stags)
+	# print("Author: ", story['auth'])
+	# print("stags: ", story['tags'])
+	# print("stags: ", stags)
+
+	post_date = datetime.datetime.now()
+	if 'ul_date' in story and isinstance(story['ul_date'], datetime.datetime):
+		post_date = story['ul_date']
 
 	new = Story(
 		title       = bleach.clean(story['name'], tags=[], strip=True),
 		srcfname    = story['fname'],
 		description = markdown.markdown(bleach.clean(story['desc'], strip=True)),
-		fspath      = covpath,
+		fspath      = fspath,
 		hash        = dathash,
 		# author      = [story['auth']],
 		# tags        = stags,
-		pub_date    = datetime.datetime.now()
+		pub_date    = post_date
 		)
 
 	[new.tags.append(Tags(tag=tag)) for tag in stags]
