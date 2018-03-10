@@ -3,8 +3,8 @@
 import os
 import os.path
 import markdown
-import natsort
 import WebRequest
+import json
 import logging
 import traceback
 import subprocess
@@ -15,11 +15,18 @@ import urllib.parse
 import datetime
 import pytz
 import pickle
+import Levenshtein
 import sys
 import dateutil.parser
 
+import spacy
+import natsort
+from fuzzywuzzy import fuzz
 import tqdm
 import UniversalArchiveInterface
+
+from datasketch import MinHash, MinHashLSH
+from nltk import ngrams
 
 import settings
 import app.api_handlers
@@ -30,6 +37,18 @@ from . import HtmlProcessor
 
 from util import webFunctions
 from datauri import DataURI
+
+def strip_markup(in_str):
+	soup = WebRequest.as_soup(in_str)
+	out_str = soup.get_text(strip=True)
+
+	out_str = out_str.replace("\r", " ")
+	out_str = out_str.replace("\n", " ")
+	out_str = out_str.replace("	", " ")
+	while "  " in out_str:
+		out_str = out_str.replace("  ", " ")
+
+	return out_str.strip().lower()
 
 class HtmlGenerator():
 
@@ -77,7 +96,10 @@ class HtmlGenerator():
 
 		fpath = os.path.join(settings.FILE_BACKEND_PATH, item_dict['fspath'])
 
-		zfp = UniversalArchiveInterface.ArchiveReader(fpath)
+		try:
+			zfp = UniversalArchiveInterface.ArchiveReader(fpath)
+		except UniversalArchiveInterface.NotAnArchive:
+			return []
 
 		files = []
 
@@ -106,6 +128,12 @@ class HtmlGenerator():
 
 
 	def _conv_int(self, in_p, tmp_p, out_p, force_pre_conv=False):
+		cachefile = out_p + ".complete"
+		if os.path.exists(cachefile):
+			with open(cachefile, "r") as fp:
+				cont = fp.read()
+			return cont
+		print("No cachefile: %s" % cachefile)
 
 		if in_p.endswith(".html") or in_p.endswith(".htm"):
 			# For HTML files, just use my parser directly. It's better in general anyways.
@@ -118,7 +146,10 @@ class HtmlGenerator():
 			out_dat = proc.extractContent()
 
 
-			return out_dat['contents']
+			ret_s = "<div>\n" + out_dat['contents'] + "</div>\n"
+			with open(cachefile, "w") as fp:
+				fp.write(ret_s)
+			return ret_s
 
 		if in_p.lower().endswith(".doc"):
 			bad_in = in_p
@@ -147,7 +178,10 @@ class HtmlGenerator():
 		out_dat = proc.extractContent()
 
 
-		return "<div>\n" + out_dat['contents'] + "</div>\n"
+		ret_s = "<div>\n" + out_dat['contents'] + "</div>\n"
+		with open(cachefile, "w") as fp:
+			fp.write(ret_s)
+		return ret_s
 
 
 	def convert(self, fname, content):
@@ -180,7 +214,7 @@ class HtmlGenerator():
 				try:
 					ret = self.convert(file_dict['fname'], file_dict['fcont'])
 					file_dict['content_div'] = ret
-					# file_dict['content_div'] = "wat"
+					file_dict['content_text'] = strip_markup(ret)
 
 				except Exception:
 					traceback.print_exc()
@@ -210,14 +244,19 @@ Table of Contents:
 		tocstr = ""
 		tocstr += header
 		for story_key in skeys:
-			for fpath, file_dict in files[story_key]['files'].items():
+			fkeys = list(files[story_key]['files'].keys())
+
+			fkeys = natsort.natsorted(fkeys, key=lambda x: (x[0].lower(), x[1].lower()))
+
+			for fkey in fkeys:
+
 				if len(files[story_key]) == 1:
 					tocstr += "%s: by %s\n" % (story_key[1], story_key[0])
 				else:
-					tocstr += "%s (%s): by %s\n" % (story_key[1], file_dict['fname'], story_key[0])
+					tocstr += "%s (%s): by %s\n" % (story_key[1], files[story_key]['files'][fkey]['fname'], story_key[0])
 				tocstr += "------\n"
 				tocstr += "\n"
-				tocstr += "<div id='%s'></div>\n" % abs(hash(story_key + (file_dict['fname'], )))
+				tocstr += "<div id='%s'></div>\n" % abs(hash(story_key + (files[story_key]['files'][fkey]['fname'], )))
 				tocstr += "\n"
 				tocstr += "\n"
 
@@ -227,13 +266,14 @@ Table of Contents:
 
 		soup = WebRequest.as_soup(formatted)
 		for story_key in tqdm.tqdm(skeys):
-			for fpath, file_dict in files[story_key]['files'].items():
+			for fpath, file_dict in tqdm.tqdm(files[story_key]['files'].items()):
 				shash = abs(hash(story_key + (file_dict['fname'], )))
 				tgt_divs = soup.find_all("div", id=str(shash))
-				assert len(tgt_divs) == 1
+				assert len(tgt_divs) == 1, "Expected 1 div, found %s" % len(tgt_divs)
 				tgt_div = tgt_divs[0]
+				new_div = WebRequest.as_soup(file_dict['content_div'])
 
-				tgt_div.string = file_dict['content_div']
+				tgt_div.insert(1, new_div.div)
 
 
 		out = soup.prettify()
@@ -246,14 +286,124 @@ Table of Contents:
 		# print(formatted)
 		# print("Markdowned")
 
+	def consolidate_dupes(self, agg_files):
+		print("Loading NLP Matcher")
+		# nlp, nlp_size = spacy.load('en_core_web_lg'), "large_vec"
+		nlp, nlp_size = spacy.load('en_core_web_sm'), "small_vec"
+		print("Matcher loaded")
+
+		# Remove short items
+		for key, value in agg_files.items():
+			for fkey in list(value['files'].keys()):
+				# print("File params: ", value['files'][fkey].keys())
+				if not 'content_text' in value['files'][fkey]:
+					print("Missing file:", key, fkey)
+					value['files'].pop(fkey)
+				elif len(value['files'][fkey]['content_text']) < 100:
+					print("Removing short file: ", (key, fkey))
+					value['files'].pop(fkey)
+
+		smap = {}
+		for key, value in agg_files.items():
+			for fkey in value['files']:
+				smap[(key, fkey)] = value['files'][fkey]['content_text']
+
+		ratios = {}
+		word_vectors = {}
+		bak_file = {}
+		pik_file_name = "matches-%s-%s.pik" % (self.tag, nlp_size)
+		if os.path.exists(pik_file_name):
+			print("Loading similarity searches from hash file %s." % pik_file_name)
+			try:
+				with open(pik_file_name, "rb") as fp:
+					loaded = pickle.load(fp)
+					if "ratios" in loaded:
+						print("Current cachefile structure")
+						ratios = loaded['ratios']
+						bak_file = loaded
+						print("Loaded %s cached comparisons" % len(ratios))
+					else:
+						print("Old cachefile structure")
+						# Allow the old file version
+						ratios = loaded
+						bak_file = {
+							'ratios' : ratios
+						}
+						print("Loaded %s cached comparisons" % len(ratios))
+
+
+			except Exception:
+				traceback.print_exc()
+				print("Pickle file invalid?")
+				print("Ignoring")
+
+
+		checks = 0
+		for key, content in tqdm.tqdm(smap.items()):
+			if key not in word_vectors:
+				word_vectors[key] = nlp(content)
+			for other, other_content in tqdm.tqdm(smap.items()):
+				if other == key:
+					continue
+
+				if other not in word_vectors:
+					word_vectors[other] = nlp(other_content)
+
+				kl = [key, other]
+				kl.sort()
+				kl = tuple(kl)
+
+				ratios.setdefault(kl, {})
+				nlp_key = "nlp_%s" % nlp_size
+				if nlp_key not in ratios[kl]:
+					# we want the ratio of the smaller one to the larger one
+					larger, smaller  = (word_vectors[key], word_vectors[other]) if len(content) >  len(other_content) else (word_vectors[key], word_vectors[other])
+
+					ratios[kl][nlp_key] = smaller.similarity(larger)
+					# print("ratio: %s (%s <-> %s)" % (ratios[kl], key, other))
+
+
+					checks += 1
+					if checks > 30:
+						checks = 0
+						print("Dumping file with %s entries" % len(bak_file['ratios']))
+						with open(pik_file_name, "wb") as fp:
+							bak_file['ratios'] = ratios
+							pickle.dump(bak_file, fp)
+				else:
+					print("Skipping search for %s due to cached result" % kl)
+
+		print("Similarity search complete.")
+		with open(pik_file_name, "wb") as fp:
+			pickle.dump(bak_file, fp)
+
+
+		perms = 512
+		lsh = MinHashLSH(threshold=0.5, num_perm=perms)
+
+		checks = 0
+		minhashes = {}
+		for key, content in tqdm.tqdm(smap.items()):
+			minhash = MinHash(num_perm=perms)
+			for d in ngrams(content, 10):
+				minhash.update("".join(d).encode('utf-8'))
+			lsh.insert(key, minhash)
+			minhashes[key] = minhash
+
+
+		for key in minhashes.keys():
+			result = lsh.query(minhashes[key])
+			print("Candidates with Jaccard similarity > 0.5 for input", key, ":", result)
+
+
 	def go(self):
 		stories = self.load_stories_for_tag(self.tag)
 
 		agg_files = {}
 		for story in stories:
 			ret = self.load_story(story)
+			story['files'] = {}
 			for fname, fpath, fcont in ret:
-				story['files'] = {}
 				story['files'][fpath] = {}
 				story['files'][fpath]['fpath'] = fpath
 				story['files'][fpath]['fcont'] = fcont
@@ -262,6 +412,8 @@ Table of Contents:
 			agg_files[(story['author'], story['title'])] = story
 
 		self.bulk_convert(agg_files)
+
+		self.consolidate_dupes(agg_files)
 
 		self.make_overall_file(agg_files)
 
