@@ -313,93 +313,6 @@ Table of Contents:
 			for fkey in value['files']:
 				smap[(key, fkey)] = value['files'][fkey]['content_text']
 
-		# ratios = {}
-		# word_vectors = {}
-		# bak_file = {}
-		# pik_file_name = "matches-%s-%s.pik" % (self.tag, nlp_size)
-		# nlp_key = "nlp_%s" % nlp_size
-		# if os.path.exists(pik_file_name):
-		# 	print("Loading similarity searches from hash file %s." % pik_file_name)
-		# 	try:
-		# 		with open(pik_file_name, "rb") as fp:
-		# 			loaded = pickle.load(fp)
-		# 			if "ratios" in loaded:
-		# 				print("Current cachefile structure")
-		# 				ratios = loaded['ratios']
-		# 				bak_file = loaded
-		# 				print("Loaded %s cached comparisons" % len([ratios]))
-		# 			else:
-		# 				print("Old cachefile structure")
-		# 				# Allow the old file version
-		# 				ratios = loaded
-		# 				bak_file = {
-		# 					'ratios' : ratios
-		# 				}
-		# 				print("Loaded %s cached comparisons" % len(ratios))
-
-
-		# 	except Exception:
-		# 		traceback.print_exc()
-		# 		print("Pickle file invalid?")
-		# 		print("Ignoring")
-
-
-		# print("Loading word vectors")
-
-		# print("Doing batch req")
-		# with ThreadPoolExecutor(max_workers=5) as ex:
-		# 	futures = [(key, ex.submit(nlp, content))
-		# 			for
-		# 				key, content
-		# 			in
-		# 				smap.items()
-		# 			if
-		# 				key not in word_vectors
-		# 		]
-
-		# 	for key, future in tqdm.tqdm(futures):
-		# 		if key not in word_vectors:
-		# 			word_vectors[key] = future.result()
-		# 		else:
-		# 			print("Re-processed %s" % (key, ))
-		# 			word_vectors[key] = future.result()
-
-		# print("Vectors loaded. Processing")
-
-		# checks = 0
-		# for key, content in tqdm.tqdm(smap.items()):
-		# 	for other, other_content in tqdm.tqdm(smap.items()):
-		# 		if other == key:
-		# 			continue
-
-		# 		kl = [key, other]
-		# 		kl.sort()
-		# 		kl = tuple(kl)
-
-		# 		ratios.setdefault(kl, {})
-		# 		if nlp_key not in ratios[kl]:
-		# 			# we want the ratio of the smaller one to the larger one
-		# 			larger, smaller  = (word_vectors[key], word_vectors[other]) \
-		# 				if len(content) > len(other_content) else               \
-		# 				(word_vectors[key], word_vectors[other])
-
-		# 			ratios[kl][nlp_key] = smaller.similarity(larger)
-		# 			# print("ratio: %s (%s <-> %s)" % (ratios[kl], key, other))
-
-
-		# 			checks += 1
-		# 			if checks > 30:
-		# 				checks = 0
-		# 				# print("Dumping file with %s entries" % len(bak_file['ratios']))
-		# 				with open(pik_file_name, "wb") as fp:
-		# 					bak_file['ratios'] = ratios
-		# 					pickle.dump(bak_file, fp)
-
-		# print("Similarity search complete.")
-		# with open(pik_file_name, "wb") as fp:
-		# 	pickle.dump(bak_file, fp)
-
-
 		perms = 512
 		lsh = MinHashLSH(threshold=0.5, num_perm=perms)
 
@@ -419,7 +332,7 @@ Table of Contents:
 		lenl = list(lens.keys())
 		lenl.sort()
 
-		print("%s items in file map before dupe elimination")
+		print("%s items in file map before dupe elimination" % len(smap))
 
 		for clen in lenl:
 			tgt_keys = lens[clen]
@@ -433,12 +346,14 @@ Table of Contents:
 				if key in result:
 					result.remove(key)
 				if result:
-					smap.pop(key)
+					still_ok = [tmp for tmp in result if tmp in smap]
+					if still_ok:
+						smap.pop(key)
 					# for res in result:
 					# print(key)
 					# print("Similar: ", result)
 
-		print("%s items in file map after dupe elimination")
+		print("%s items in file map after dupe elimination" % len(smap))
 
 		for key in minhashes.keys():
 			result = lsh.query(minhashes[key])
@@ -462,7 +377,7 @@ Table of Contents:
 
 		self.bulk_convert(agg_files)
 
-		self.consolidate_dupes(agg_files)
+		agg_files = self.consolidate_dupes(agg_files)
 
 		self.make_overall_file(agg_files)
 
