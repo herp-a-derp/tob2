@@ -24,6 +24,9 @@ import natsort
 from fuzzywuzzy import fuzz
 import tqdm
 import UniversalArchiveInterface
+from concurrent.futures import ThreadPoolExecutor
+
+
 
 from datasketch import MinHash, MinHashLSH
 from nltk import ngrams
@@ -118,6 +121,8 @@ class HtmlGenerator():
 			if file_path.lower().endswith(".jpg"):
 				continue
 			if file_path.lower().endswith(".png"):
+				continue
+			if file_path.lower().endswith(".gif"):
 				continue
 
 
@@ -308,80 +313,96 @@ Table of Contents:
 			for fkey in value['files']:
 				smap[(key, fkey)] = value['files'][fkey]['content_text']
 
-		ratios = {}
-		word_vectors = {}
-		bak_file = {}
-		pik_file_name = "matches-%s-%s.pik" % (self.tag, nlp_size)
-		if os.path.exists(pik_file_name):
-			print("Loading similarity searches from hash file %s." % pik_file_name)
-			try:
-				with open(pik_file_name, "rb") as fp:
-					loaded = pickle.load(fp)
-					if "ratios" in loaded:
-						print("Current cachefile structure")
-						ratios = loaded['ratios']
-						bak_file = loaded
-						print("Loaded %s cached comparisons" % len(ratios))
-					else:
-						print("Old cachefile structure")
-						# Allow the old file version
-						ratios = loaded
-						bak_file = {
-							'ratios' : ratios
-						}
-						print("Loaded %s cached comparisons" % len(ratios))
+		# ratios = {}
+		# word_vectors = {}
+		# bak_file = {}
+		# pik_file_name = "matches-%s-%s.pik" % (self.tag, nlp_size)
+		# nlp_key = "nlp_%s" % nlp_size
+		# if os.path.exists(pik_file_name):
+		# 	print("Loading similarity searches from hash file %s." % pik_file_name)
+		# 	try:
+		# 		with open(pik_file_name, "rb") as fp:
+		# 			loaded = pickle.load(fp)
+		# 			if "ratios" in loaded:
+		# 				print("Current cachefile structure")
+		# 				ratios = loaded['ratios']
+		# 				bak_file = loaded
+		# 				print("Loaded %s cached comparisons" % len([ratios]))
+		# 			else:
+		# 				print("Old cachefile structure")
+		# 				# Allow the old file version
+		# 				ratios = loaded
+		# 				bak_file = {
+		# 					'ratios' : ratios
+		# 				}
+		# 				print("Loaded %s cached comparisons" % len(ratios))
 
 
-			except Exception:
-				traceback.print_exc()
-				print("Pickle file invalid?")
-				print("Ignoring")
+		# 	except Exception:
+		# 		traceback.print_exc()
+		# 		print("Pickle file invalid?")
+		# 		print("Ignoring")
 
 
-		checks = 0
-		for key, content in tqdm.tqdm(smap.items()):
-			if key not in word_vectors:
-				word_vectors[key] = nlp(content)
-			for other, other_content in tqdm.tqdm(smap.items()):
-				if other == key:
-					continue
+		# print("Loading word vectors")
 
-				if other not in word_vectors:
-					word_vectors[other] = nlp(other_content)
+		# print("Doing batch req")
+		# with ThreadPoolExecutor(max_workers=5) as ex:
+		# 	futures = [(key, ex.submit(nlp, content))
+		# 			for
+		# 				key, content
+		# 			in
+		# 				smap.items()
+		# 			if
+		# 				key not in word_vectors
+		# 		]
 
-				kl = [key, other]
-				kl.sort()
-				kl = tuple(kl)
+		# 	for key, future in tqdm.tqdm(futures):
+		# 		if key not in word_vectors:
+		# 			word_vectors[key] = future.result()
+		# 		else:
+		# 			print("Re-processed %s" % (key, ))
+		# 			word_vectors[key] = future.result()
 
-				ratios.setdefault(kl, {})
-				nlp_key = "nlp_%s" % nlp_size
-				if nlp_key not in ratios[kl]:
-					# we want the ratio of the smaller one to the larger one
-					larger, smaller  = (word_vectors[key], word_vectors[other]) if len(content) >  len(other_content) else (word_vectors[key], word_vectors[other])
+		# print("Vectors loaded. Processing")
 
-					ratios[kl][nlp_key] = smaller.similarity(larger)
-					# print("ratio: %s (%s <-> %s)" % (ratios[kl], key, other))
+		# checks = 0
+		# for key, content in tqdm.tqdm(smap.items()):
+		# 	for other, other_content in tqdm.tqdm(smap.items()):
+		# 		if other == key:
+		# 			continue
+
+		# 		kl = [key, other]
+		# 		kl.sort()
+		# 		kl = tuple(kl)
+
+		# 		ratios.setdefault(kl, {})
+		# 		if nlp_key not in ratios[kl]:
+		# 			# we want the ratio of the smaller one to the larger one
+		# 			larger, smaller  = (word_vectors[key], word_vectors[other]) \
+		# 				if len(content) > len(other_content) else               \
+		# 				(word_vectors[key], word_vectors[other])
+
+		# 			ratios[kl][nlp_key] = smaller.similarity(larger)
+		# 			# print("ratio: %s (%s <-> %s)" % (ratios[kl], key, other))
 
 
-					checks += 1
-					if checks > 30:
-						checks = 0
-						print("Dumping file with %s entries" % len(bak_file['ratios']))
-						with open(pik_file_name, "wb") as fp:
-							bak_file['ratios'] = ratios
-							pickle.dump(bak_file, fp)
-				else:
-					print("Skipping search for %s due to cached result" % kl)
+		# 			checks += 1
+		# 			if checks > 30:
+		# 				checks = 0
+		# 				# print("Dumping file with %s entries" % len(bak_file['ratios']))
+		# 				with open(pik_file_name, "wb") as fp:
+		# 					bak_file['ratios'] = ratios
+		# 					pickle.dump(bak_file, fp)
 
-		print("Similarity search complete.")
-		with open(pik_file_name, "wb") as fp:
-			pickle.dump(bak_file, fp)
+		# print("Similarity search complete.")
+		# with open(pik_file_name, "wb") as fp:
+		# 	pickle.dump(bak_file, fp)
 
 
 		perms = 512
 		lsh = MinHashLSH(threshold=0.5, num_perm=perms)
 
-		checks = 0
 		minhashes = {}
 		for key, content in tqdm.tqdm(smap.items()):
 			minhash = MinHash(num_perm=perms)
@@ -390,6 +411,34 @@ Table of Contents:
 			lsh.insert(key, minhash)
 			minhashes[key] = minhash
 
+		lens = {}
+		for key, content in smap.items():
+			clen = len(content)
+			lens.setdefault(clen, [])
+			lens[clen].append(key)
+		lenl = list(lens.keys())
+		lenl.sort()
+
+		print("%s items in file map before dupe elimination")
+
+		for clen in lenl:
+			tgt_keys = lens[clen]
+			for key in tgt_keys:
+				if key not in smap:
+					continue
+				if key not in minhashes:
+					continue
+
+				result = lsh.query(minhashes[key])
+				if key in result:
+					result.remove(key)
+				if result:
+					smap.pop(key)
+					# for res in result:
+					# print(key)
+					# print("Similar: ", result)
+
+		print("%s items in file map after dupe elimination")
 
 		for key in minhashes.keys():
 			result = lsh.query(minhashes[key])
