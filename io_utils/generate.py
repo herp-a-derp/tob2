@@ -15,6 +15,7 @@ import urllib.parse
 import datetime
 import pytz
 import pickle
+import string
 import Levenshtein
 import sys
 import dateutil.parser
@@ -24,7 +25,7 @@ import natsort
 from fuzzywuzzy import fuzz
 import tqdm
 import UniversalArchiveInterface
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 
 
@@ -50,8 +51,18 @@ def strip_markup(in_str):
 	out_str = out_str.replace("	", " ")
 	while "  " in out_str:
 		out_str = out_str.replace("  ", " ")
+	out_str = "".join([c for c in out_str if c in
+		(string.ascii_letters + string.digits + ".,! ")])
 
 	return out_str.strip().lower()
+
+
+def minhash_str(in_str, perms, gram_sz):
+	minhash = MinHash(num_perm=perms)
+	for d in ngrams(in_str, gram_sz):
+		minhash.update("".join(d).encode('utf-8'))
+	return minhash
+
 
 class HtmlGenerator():
 
@@ -123,6 +134,8 @@ class HtmlGenerator():
 			if file_path.lower().endswith(".png"):
 				continue
 			if file_path.lower().endswith(".gif"):
+				continue
+			if file_path.lower().endswith(".thmx"):
 				continue
 
 
@@ -244,7 +257,7 @@ Table of Contents:
 		'''
 
 		skeys = list(files.keys())
-		skeys = natsort.natsorted(skeys, key=lambda x: (x[0].lower(), x[1].lower()))
+		skeys = natsort.natsorted(skeys, key=lambda x: (files[x]['author'].lower(), x[0].lower(), x[1].lower()))
 
 		tocstr = ""
 		tocstr += header
@@ -292,11 +305,6 @@ Table of Contents:
 		# print("Markdowned")
 
 	def consolidate_dupes(self, agg_files):
-		print("Loading NLP Matcher")
-		# nlp, nlp_size = spacy.load('en_core_web_lg'), "large_vec"
-		nlp, nlp_size = spacy.load('en_core_web_sm'), "small_vec"
-		print("Matcher loaded")
-
 		# Remove short items
 		for key, value in agg_files.items():
 			for fkey in list(value['files'].keys()):
@@ -314,15 +322,28 @@ Table of Contents:
 				smap[(key, fkey)] = value['files'][fkey]['content_text']
 
 		perms = 512
-		lsh = MinHashLSH(threshold=0.5, num_perm=perms)
+		gram_sz = 10
+		thresh = 0.5
+		lsh = MinHashLSH(threshold=thresh, num_perm=perms)
 
+		print("Loading word hashes")
 		minhashes = {}
-		for key, content in tqdm.tqdm(smap.items()):
-			minhash = MinHash(num_perm=perms)
-			for d in ngrams(content, 10):
-				minhash.update("".join(d).encode('utf-8'))
-			lsh.insert(key, minhash)
-			minhashes[key] = minhash
+
+		with ProcessPoolExecutor(max_workers=10) as ex:
+			print("Submitting jobs")
+			futures = [(key, ex.submit(minhash_str, content, perms, gram_sz))
+					for
+						key, content
+					in
+						smap.items()
+				]
+
+			print("Consuming futures")
+			for key, future in tqdm.tqdm(futures):
+				minhash = future.result()
+				lsh.insert(key, minhash)
+				minhashes[key] = minhash
+
 
 		lens = {}
 		for key, content in smap.items():
@@ -349,16 +370,16 @@ Table of Contents:
 					still_ok = [tmp for tmp in result if tmp in smap]
 					if still_ok:
 						smap.pop(key)
+						akey, fkey = key
+						agg_files[akey]['files'].pop(fkey)
+
 					# for res in result:
 					# print(key)
 					# print("Similar: ", result)
 
 		print("%s items in file map after dupe elimination" % len(smap))
 
-		for key in minhashes.keys():
-			result = lsh.query(minhashes[key])
-			print("Candidates with Jaccard similarity > 0.5 for input", key, ":", result)
-
+		return agg_files
 
 	def go(self):
 		stories = self.load_stories_for_tag(self.tag)

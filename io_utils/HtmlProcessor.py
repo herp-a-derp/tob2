@@ -106,6 +106,18 @@ class HtmlPageProcessor():
 				for key in list(found.attrs):
 					del found.attrs[key]
 
+		for fonttag in soup.find_all("font"):
+			if not fonttag.get_text(strip=True):
+				fonttag.decompose()
+			else:
+				fonttag.unwrap()
+
+		for p_tag in soup.find_all("p"):
+			if not p_tag.get_text(strip=True):
+				p_tag.decompose()
+			elif "style" in p_tag.attrs and p_tag.attrs['style'].strip() == "":
+				p_tag.attrs.pop('style')
+
 		return soup
 
 	def decomposeItems(self, soup, toDecompose):
