@@ -117,6 +117,16 @@ class HtmlPageProcessor():
 				p_tag.decompose()
 			elif "style" in p_tag.attrs and p_tag.attrs['style'].strip() == "":
 				p_tag.attrs.pop('style')
+			elif "style" in p_tag.attrs and 'font-family' in p_tag.attrs['style']:
+				p_tag.attrs.pop('style')
+
+		for span_tag in soup.find_all("span"):
+			if not span_tag.get_text(strip=True):
+				span_tag.decompose()
+			elif "style" in span_tag.attrs and span_tag.attrs['style'].strip() == "":
+				span_tag.attrs.pop('style')
+			else:
+				span_tag.unwrap()
 
 		return soup
 
