@@ -116,9 +116,11 @@ class HtmlPageProcessor():
 			if not p_tag.get_text(strip=True):
 				p_tag.decompose()
 			elif "style" in p_tag.attrs and p_tag.attrs['style'].strip() == "":
-				p_tag.attrs.pop('style')
-			elif "style" in p_tag.attrs and 'font-family' in p_tag.attrs['style']:
-				p_tag.attrs.pop('style')
+				p_tag.attrs = {}
+			elif "style" in p_tag.attrs and 'font-' in p_tag.attrs['style']:
+				p_tag.attrs = {}
+			elif "style" in p_tag.attrs and 'margin-' in p_tag.attrs['style']:
+				p_tag.attrs = {}
 
 		for span_tag in soup.find_all("span"):
 			if not span_tag.get_text(strip=True):
@@ -127,6 +129,18 @@ class HtmlPageProcessor():
 				span_tag.attrs.pop('style')
 			else:
 				span_tag.unwrap()
+
+		# If everything is bold, it's meaningless, so unwrap that.
+		for b_tag in soup.find_all("b"):
+			bt = b_tag.get_text(strip=True)
+			bt = bt.replace("\n", " ")
+			bt = bt.replace("\t", " ")
+			while "  " in bt:
+				bt = bt.replace("  ", " ")
+			blen = len(bt)
+			if blen > 500:
+				b_tag.unwrap()
+
 
 		return soup
 
@@ -204,6 +218,11 @@ class HtmlPageProcessor():
 		if self.decompose_svg:
 			for item in soup.find_all("svg"):
 				item.decompose()
+
+		for item in soup.find_all("o:p"):
+			item.unwrap()
+		for item in soup.find_all("o"):
+			item.unwrap()
 
 		return soup
 
