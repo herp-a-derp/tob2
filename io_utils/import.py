@@ -11,7 +11,7 @@ import datetime
 import pytz
 import pickle
 import dateutil.parser
-from util import webFunctions
+import WebRequest
 
 import settings
 import app.api_handlers
@@ -23,20 +23,20 @@ class Walker():
 	sourceurl = "http://overflowingbra.com/ding.htm?dates=%d"
 
 	year_min = 1998
-	year_max = 2018
+	year_max = 2019
 
 	yearpik_name = "stories_for_year_%s.pik"
 	aggpik_name  = "stories_all.pik"
 
 	def __init__(self):
 		self.log = logging.getLogger("Main.Scraper")
-		self.wg = webFunctions.WebGetRobust()
+		self.wg = WebRequest.WebGetRobust()
 		self.log.info("Scraper init!")
 
 	def get_story_file(self, filediv):
 		link = filediv.a['href']
 		link = urllib.parse.urljoin(self.sourceurl, link)
-		filectnt, name, mime = self.wg.getFileNameAndMime(link)
+		filectnt, name, mime = self.wg.getFileNameMime(link)
 		self.log.info("Retreived %s byte file with name %s.", len(filectnt), name)
 		return {
 			"file" : filectnt,
@@ -46,6 +46,8 @@ class Walker():
 
 
 	def get_story(self, story_div, year):
+		# print("story_div")
+		# print(story_div)
 		ret = {
 			"title"  : None,
 			"author" : None,
@@ -57,8 +59,15 @@ class Walker():
 		}
 		ret['title'] = story_div.find("div", class_='storytitle').get_text().strip()
 		ret['author'] = story_div.find("div", class_='author').get_text().strip()
-		ret['desc'] = story_div.find("div", class_='summary').get_text().strip()
-		ret['dlcount'] = int(story_div.find("div", class_='downloads').get_text().strip().split(" ")[0])
+		if story_div.find("div", class_='summary'):
+			ret['desc'] = story_div.find("div", class_='summary').get_text().strip()
+		else:
+			ret['desc'] = "No description!"
+		if story_div.find("div", class_='downloads'):
+			ret['dlcount'] = int(story_div.find("div", class_='downloads').get_text().strip().split(" ")[0])
+		else:
+			ret['desc'] = "No dlcount!"
+
 		ret['tags'] = [tmp for tmp in story_div.find("div", class_='storycodes').get_text().strip().split(" ") if tmp]
 		date_tmp = story_div.find("div", class_='submitdate').get_text().strip()
 
@@ -91,7 +100,7 @@ class Walker():
 	def get_releases(self):
 		for year in range(self.year_min, self.year_max+1):
 			pikname = self.yearpik_name % year
-			if os.path.exists(pikname):
+			if os.path.exists(pikname) and year != 2018:
 				self.log.info("Already have stories for year %s", year)
 			else:
 				year_releases = self.get_year(year)

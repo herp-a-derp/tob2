@@ -36,6 +36,7 @@ pstat
 psutil
 psycopg2
 pyparsing
+python-datauri
 python-bcrypt
 python-dateutil
 python-levenshtein
@@ -55,3 +56,4 @@ validators
 Werkzeug
 WTForms-JSON
 WTForms
+webcolors

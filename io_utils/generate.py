@@ -27,7 +27,7 @@ import tqdm
 import UniversalArchiveInterface
 from concurrent.futures import ProcessPoolExecutor
 
-
+import WebRequest
 
 from datasketch import MinHash, MinHashLSH
 from nltk import ngrams
@@ -39,7 +39,7 @@ import app
 
 from . import HtmlProcessor
 
-from util import webFunctions
+
 from datauri import DataURI
 
 def strip_markup(in_str):
@@ -89,6 +89,8 @@ class HtmlGenerator():
 				auth_l = story.author
 				assert len(auth_l) == 1
 				author = story.author[0].name
+				if author == 'Continuous Story' or author == 'continuous story':
+					continue
 				story_dat = {
 						'id'          : story.id,
 						'title'       : story.title,
@@ -130,6 +132,8 @@ class HtmlGenerator():
 
 			fctnt = fileCtnt.read()
 			if file_path.lower().endswith(".jpg"):
+				continue
+			if file_path.lower().endswith(".jpeg"):
 				continue
 			if file_path.lower().endswith(".png"):
 				continue
