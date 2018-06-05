@@ -23,7 +23,7 @@ class Walker():
 	sourceurl = "http://overflowingbra.com/ding.htm?dates=%d"
 
 	year_min = 1998
-	year_max = 2019
+	year_max = 2018
 
 	yearpik_name = "stories_for_year_%s.pik"
 	aggpik_name  = "stories_all.pik"
@@ -100,7 +100,7 @@ class Walker():
 	def get_releases(self):
 		for year in range(self.year_min, self.year_max+1):
 			pikname = self.yearpik_name % year
-			if os.path.exists(pikname) and year != 2018:
+			if os.path.exists(pikname):
 				self.log.info("Already have stories for year %s", year)
 			else:
 				year_releases = self.get_year(year)

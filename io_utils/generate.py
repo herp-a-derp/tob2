@@ -112,39 +112,59 @@ class HtmlGenerator():
 
 		fpath = os.path.join(settings.FILE_BACKEND_PATH, item_dict['fspath'])
 
+
+
 		try:
 			zfp = UniversalArchiveInterface.ArchiveReader(fpath)
 		except UniversalArchiveInterface.NotAnArchive:
+			ftype = magic.from_file(fpath, mime=True)
+			ftype = ftype.split(";")[0]
+			if ftype == 'text/html':
+				print("Direct HTML content: '%s'" % fpath)
+				with open(fpath, "r") as fp:
+					return [[fpath.split("/")[-1], "", fp.read()]]
+			elif ftype == 'application/msword':
+				print("Direct word content: '%s'" % fpath)
+				with open(fpath, "r") as fp:
+					return [[fpath.split("/")[-1], "", fp.read()]]
+			else:
+				print("Don't know how to process '%s' file type." % (ftype))
+
 			return []
 
 		files = []
 
-		for file_path, fileCtnt in zfp:
-			if file_path.endswith("Thumbs.db"):
-				continue
-			if "/__MACOSX/" in file_path or file_path.startswith("__MACOSX/"):
-				continue
+		try:
+			for file_path, fileCtnt in zfp:
+				if file_path.endswith("Thumbs.db"):
+					continue
+				if "/__MACOSX/" in file_path or file_path.startswith("__MACOSX/"):
+					continue
 
-			if ".DS_Store" in file_path:
-				continue
-			if ".pages" in file_path:
-				continue
+				if ".DS_Store" in file_path:
+					continue
+				if ".pages" in file_path:
+					continue
 
-			fctnt = fileCtnt.read()
-			if file_path.lower().endswith(".jpg"):
-				continue
-			if file_path.lower().endswith(".jpeg"):
-				continue
-			if file_path.lower().endswith(".png"):
-				continue
-			if file_path.lower().endswith(".gif"):
-				continue
-			if file_path.lower().endswith(".thmx"):
-				continue
+				fctnt = fileCtnt.read()
+				if file_path.lower().endswith(".jpg"):
+					continue
+				if file_path.lower().endswith(".jpeg"):
+					continue
+				if file_path.lower().endswith(".png"):
+					continue
+				if file_path.lower().endswith(".gif"):
+					continue
+				if file_path.lower().endswith(".thmx"):
+					continue
 
 
-			file_name = file_path.split("/")[-1]
-			files.append((file_name, file_path, fctnt))
+				file_name = file_path.split("/")[-1]
+				files.append((file_name, file_path, fctnt))
+
+		# Thrown on password protected zips. Apparently.
+		except RuntimeError:
+			pass
 
 		return files
 
@@ -231,7 +251,7 @@ class HtmlGenerator():
 		os.makedirs(self.proc_tmp_dir,   exist_ok=True)
 		os.makedirs(self.output_tmp_dir, exist_ok=True)
 
-		for story_key, story_params in tqdm.tqdm(files.items()):
+		for story_key, story_params in tqdm.tqdm(files.items(), desc="Converting Files"):
 			for file_dict in story_params['files'].values():
 				try:
 					ret = self.convert(file_dict['fname'], file_dict['fcont'])
@@ -287,8 +307,8 @@ Table of Contents:
 		formatted = markdown.markdown(tocstr, extensions=["toc", 'extra'])
 
 		soup = WebRequest.as_soup(formatted)
-		for story_key in tqdm.tqdm(skeys):
-			for fpath, file_dict in tqdm.tqdm(files[story_key]['files'].items()):
+		for story_key in tqdm.tqdm(skeys, "Building overall file"):
+			for fpath, file_dict in tqdm.tqdm(files[story_key]['files'].items(), desc="Processing single input"):
 				shash = abs(hash(story_key + (file_dict['fname'], )))
 				tgt_divs = soup.find_all("div", id=str(shash))
 				assert len(tgt_divs) == 1, "Expected 1 div, found %s" % len(tgt_divs)
@@ -343,7 +363,7 @@ Table of Contents:
 				]
 
 			print("Consuming futures")
-			for key, future in tqdm.tqdm(futures):
+			for key, future in tqdm.tqdm(futures, "Hashing"):
 				minhash = future.result()
 				lsh.insert(key, minhash)
 				minhashes[key] = minhash
@@ -389,7 +409,7 @@ Table of Contents:
 		stories = self.load_stories_for_tag(self.tag)
 
 		agg_files = {}
-		for story in stories:
+		for story in tqdm.tqdm(stories, desc="Loading Stories"):
 			ret = self.load_story(story)
 			story['files'] = {}
 			for fname, fpath, fcont in ret:
