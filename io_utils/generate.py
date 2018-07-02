@@ -1,6 +1,7 @@
 
 
 import os
+import click
 import os.path
 import markdown
 import WebRequest
@@ -18,6 +19,7 @@ import pickle
 import string
 import Levenshtein
 import sys
+import magic
 import dateutil.parser
 
 import spacy
@@ -25,6 +27,7 @@ import natsort
 from fuzzywuzzy import fuzz
 import tqdm
 import UniversalArchiveInterface
+from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
 
 import WebRequest
@@ -66,12 +69,39 @@ def minhash_str(in_str, perms, gram_sz):
 
 class HtmlGenerator():
 
-	def __init__(self, target_tag):
+	def __init__(self, target_tag=None, target_string=None):
 		self.tag = target_tag
+		self.str = target_string
 
 		self.input_tmp_dir  = os.path.abspath("./conv_temp/in")
 		self.proc_tmp_dir  = os.path.abspath("./conv_temp/mid")
 		self.output_tmp_dir = os.path.abspath("./conv_temp/out")
+
+	def __unpack_stories(self, stories_list):
+
+		ret = []
+		for story in stories_list:
+			auth_l = story.author
+			assert len(auth_l) == 1
+			author = story.author[0].name
+			if author == 'Continuous Story' or author == 'continuous story':
+				continue
+			story_dat = {
+					'id'          : story.id,
+					'title'       : story.title,
+					'author'      : author,
+					'description' : story.description,
+					'orig_lang'   : story.orig_lang,
+					'chapter'     : story.chapter,
+					'pub_date'    : story.pub_date,
+					'srcfname'    : story.srcfname,
+					'fspath'      : story.fspath,
+					'hash'        : story.hash,
+				}
+			ret.append(story_dat)
+
+		ret.sort(key=lambda x: x['title'])
+		return ret
 
 
 	def load_stories_for_tag(self, tag):
@@ -84,29 +114,18 @@ class HtmlGenerator():
 			stories = [tmp.series_row for tmp in tag_instances if tmp.series_row.fspath]
 			print("Found %s matching tags, %s matching stories" % (len(tag_instances), len(stories)))
 
-			ret = []
-			for story in stories:
-				auth_l = story.author
-				assert len(auth_l) == 1
-				author = story.author[0].name
-				if author == 'Continuous Story' or author == 'continuous story':
-					continue
-				story_dat = {
-						'id'          : story.id,
-						'title'       : story.title,
-						'author'      : author,
-						'description' : story.description,
-						'orig_lang'   : story.orig_lang,
-						'chapter'     : story.chapter,
-						'pub_date'    : story.pub_date,
-						'srcfname'    : story.srcfname,
-						'fspath'      : story.fspath,
-						'hash'        : story.hash,
-					}
-				ret.append(story_dat)
+			return self.__unpack_stories(stories)
 
-			ret.sort(key=lambda x: x['title'])
-			return ret
+	def load_all_stories(self):
+		with app.app.app_context():
+			story_instances = app.models.Story.query.all()
+			if not story_instances:
+				print("No stories?")
+			stories = [tmp for tmp in story_instances if tmp.fspath]
+			print("Found %s matching story_instances, %s matching stories" % (len(story_instances), len(stories)))
+
+
+			return self.__unpack_stories(stories)
 
 	def load_story(self, item_dict):
 
@@ -114,23 +133,25 @@ class HtmlGenerator():
 
 
 
-		try:
-			zfp = UniversalArchiveInterface.ArchiveReader(fpath)
-		except UniversalArchiveInterface.NotAnArchive:
-			ftype = magic.from_file(fpath, mime=True)
-			ftype = ftype.split(";")[0]
-			if ftype == 'text/html':
-				print("Direct HTML content: '%s'" % fpath)
-				with open(fpath, "r") as fp:
-					return [[fpath.split("/")[-1], "", fp.read()]]
-			elif ftype == 'application/msword':
-				print("Direct word content: '%s'" % fpath)
-				with open(fpath, "r") as fp:
-					return [[fpath.split("/")[-1], "", fp.read()]]
-			else:
-				print("Don't know how to process '%s' file type." % (ftype))
-
+		ftype = magic.from_file(fpath, mime=True)
+		ftype = ftype.split(";")[0]
+		if ftype == 'text/html':
+			print("Direct HTML content: '%s'" % fpath)
+			with open(fpath, "rb") as fp:
+				return [[fpath.split("/")[-1], "", fp.read()]]
+		elif ftype == 'application/msword' or \
+			ftype == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+			print("Direct word content: '%s'" % fpath)
+			with open(fpath, "rb") as fp:
+				return [[fpath.split("/")[-1], "", fp.read()]]
+		elif ftype == 'inode/x-empty':
 			return []
+		else:
+			try:
+				zfp = UniversalArchiveInterface.ArchiveReader(fpath)
+			except UniversalArchiveInterface.NotAnArchive:
+				print("Don't know how to process '%s' file type." % (ftype))
+				return []
 
 		files = []
 
@@ -148,6 +169,10 @@ class HtmlGenerator():
 
 				fctnt = fileCtnt.read()
 				if file_path.lower().endswith(".jpg"):
+					continue
+				if file_path.lower().endswith(".mp3"):
+					continue
+				if file_path.lower().endswith(".wav"):
 					continue
 				if file_path.lower().endswith(".jpeg"):
 					continue
@@ -181,7 +206,14 @@ class HtmlGenerator():
 			# For HTML files, just use my parser directly. It's better in general anyways.
 			with open(in_p, "rb") as fp:
 				raw_b = fp.read()
+
 				decoded = bs4.UnicodeDammit(raw_b).unicode_markup
+
+				if 'charset=iso-8859-1' in decoded:
+					decoded = decoded.replace("charset=iso-8859-1", "charset=UTF-8")
+				if 'charset=ISO-8859-1' in decoded:
+					decoded = decoded.replace("charset=ISO-8859-1", "charset=UTF-8")
+
 				html_in = ftfy.fix_text(decoded)
 
 			proc = HtmlProcessor.HtmlPageProcessor(in_p, html_in)
@@ -189,6 +221,8 @@ class HtmlGenerator():
 
 
 			ret_s = "<div>\n" + out_dat['contents'] + "</div>\n"
+
+			print("Direct HTML writing to output cache: %s", cachefile)
 			with open(cachefile, "w") as fp:
 				fp.write(ret_s)
 			return ret_s
@@ -196,22 +230,22 @@ class HtmlGenerator():
 		if in_p.lower().endswith(".doc"):
 			bad_in = in_p
 			in_p = tmp_p + ".rtf"
-			subprocess.run(["unoconv", "-f", "rtf", "-o", in_p, bad_in], check=True, stdout=subprocess.PIPE)
+			subprocess.run(["unoconv", "-f", "rtf", "-o", in_p, bad_in], check=True, timeout=60)
 
 		if in_p.lower().endswith(".wps"):
 			bad_in = in_p
 			in_p = tmp_p + ".rtf"
-			subprocess.run(["unoconv", "-f", "rtf", "-o", in_p, bad_in], check=True, stdout=subprocess.PIPE)
+			subprocess.run(["unoconv", "-f", "rtf", "-o", in_p, bad_in], check=True, timeout=60)
 
 		if force_pre_conv:
 			bad_in = in_p
 			in_p = tmp_p + ".rtf"
-			subprocess.run(["unoconv", "-f", "rtf", "-o", in_p, bad_in], check=True, stdout=subprocess.PIPE)
+			subprocess.run(["unoconv", "-f", "rtf", "-o", in_p, bad_in], check=True, timeout=60)
 
 		tmp_f_1 = tmp_p + "_mid.rtf"
 
-		subprocess.run(["ebook-convert", in_p, tmp_f_1], check=True, stdout=subprocess.PIPE)
-		subprocess.run(["unoconv", "-f", "html", "-o", tmp_p + ".html", tmp_f_1], check=True, stdout=subprocess.PIPE)
+		subprocess.run(["ebook-convert", in_p, tmp_f_1, "--enable-heuristics"], check=True, timeout=60)
+		subprocess.run(["unoconv", "-f", "html", "-o", tmp_p + ".html", tmp_f_1], check=True, timeout=60)
 
 		with open(tmp_p + ".html") as fp:
 			html_in = fp.read()
@@ -221,6 +255,8 @@ class HtmlGenerator():
 
 
 		ret_s = "<div>\n" + out_dat['contents'] + "</div>\n"
+
+		print("Writing to output cache: %s", cachefile)
 		with open(cachefile, "w") as fp:
 			fp.write(ret_s)
 		return ret_s
@@ -243,7 +279,11 @@ class HtmlGenerator():
 			return self._conv_int(in_p, tmp_p, out_p)
 		except Exception:
 			print("error processing %s. Forcing intermediate rtf step." % fname)
-			return self._conv_int(in_p, tmp_p, out_p, force_pre_conv=True)
+			try:
+				return self._conv_int(in_p, tmp_p, out_p, force_pre_conv=True)
+			except Exception:
+				print("Failed when processing %s even with rtf step." % fname)
+				return ""
 
 
 	def bulk_convert(self, files):
@@ -251,16 +291,30 @@ class HtmlGenerator():
 		os.makedirs(self.proc_tmp_dir,   exist_ok=True)
 		os.makedirs(self.output_tmp_dir, exist_ok=True)
 
-		for story_key, story_params in tqdm.tqdm(files.items(), desc="Converting Files"):
-			for file_dict in story_params['files'].values():
-				try:
-					ret = self.convert(file_dict['fname'], file_dict['fcont'])
-					file_dict['content_div'] = ret
-					file_dict['content_text'] = strip_markup(ret)
+		results = []
 
-				except Exception:
-					traceback.print_exc()
-					print("Failure converting %s (%s)!" % (file_dict['fname'], story_params['title']))
+		with ThreadPoolExecutor(max_workers=4) as exc:
+			for story_key in tqdm.tqdm(files.keys(), desc="Converting Files"):
+				for f_key in files[story_key]['files'].keys():
+					try:
+						files[story_key]['files'][f_key]['future'] = exc.submit(self.convert, files[story_key]['files'][f_key]['fname'], files[story_key]['files'][f_key]['fcont'])
+
+					except Exception:
+						traceback.print_exc()
+						print("Failure converting %s (%s)!" % (files[story_key]['files'][f_key]['fname'], files[story_key]['title']))
+
+			print("All files submitted to executors. Iterating over results.")
+			# for story_key, story_params in tqdm.tqdm(files.items(), desc="Loading Results"):
+			# 	for file_dict in story_params['files'].values():
+			for story_key in tqdm.tqdm(files.keys(), desc="Converting Files"):
+				for f_key in files[story_key]['files'].keys():
+					try:
+						files[story_key]['files'][f_key]['content_div'] = files[story_key]['files'][f_key]['future'].result()
+						files[story_key]['files'][f_key]['content_text'] = strip_markup(files[story_key]['files'][f_key]['content_div'])
+
+					except Exception:
+						traceback.print_exc()
+						print("Failure converting %s (%s)!" % (files[story_key]['files'][f_key]['fname'], files[story_key]['title']))
 
 	def make_overall_file(self, files):
 		header = '''
@@ -288,7 +342,7 @@ Table of Contents:
 		for story_key in skeys:
 			fkeys = list(files[story_key]['files'].keys())
 
-			fkeys = natsort.natsorted(fkeys, key=lambda x: (x[0].lower(), x[1].lower()))
+			fkeys = natsort.natsorted(fkeys, key=lambda x: x.lower())
 
 			for fkey in fkeys:
 
@@ -309,8 +363,10 @@ Table of Contents:
 		soup = WebRequest.as_soup(formatted)
 		for story_key in tqdm.tqdm(skeys, "Building overall file"):
 			for fpath, file_dict in tqdm.tqdm(files[story_key]['files'].items(), desc="Processing single input"):
-				shash = abs(hash(story_key + (file_dict['fname'], )))
-				tgt_divs = soup.find_all("div", id=str(shash))
+				wat_1 = hash(story_key + (file_dict['fname'], ))
+				wat_2 = abs(wat_1)
+				shash = str(wat_2)
+				tgt_divs = soup.find_all("div", id=shash)
 				assert len(tgt_divs) == 1, "Expected 1 div, found %s" % len(tgt_divs)
 				tgt_div = tgt_divs[0]
 				new_div = WebRequest.as_soup(file_dict['content_div'])
@@ -320,7 +376,10 @@ Table of Contents:
 
 		out = soup.prettify()
 
-		with open("Aggregate file for %s.html" % (self.tag, ), 'w') as fp:
+		with open("Aggregate file %s%s.html" % (
+					((" tag %s" % self.tag) if self.tag else ""),
+					((" with str %s" % self.str) if self.str else ""),
+				), 'w') as fp:
 			fp.write(out)
 
 		print("Resulting file size: %s" % len(out))
@@ -405,8 +464,23 @@ Table of Contents:
 
 		return agg_files
 
+
+	def __filter_stories(self, agg_files, filter_str):
+		for story_key in list(agg_files.keys()):
+			for fkey in list(agg_files[story_key]['files'].keys()):
+				if not filter_str.lower() in agg_files[story_key]['files'][fkey]['content_text'].lower():
+					print("Removing file %s from output" % agg_files[story_key]['files'][fkey]['fname'])
+					agg_files[story_key]['files'].pop(fkey)
+
+
+		return agg_files
+
+
 	def go(self):
-		stories = self.load_stories_for_tag(self.tag)
+		if self.tag:
+			stories = self.load_stories_for_tag(self.tag)
+		else:
+			stories = self.load_all_stories()
 
 		agg_files = {}
 		for story in tqdm.tqdm(stories, desc="Loading Stories"):
@@ -424,11 +498,54 @@ Table of Contents:
 
 		agg_files = self.consolidate_dupes(agg_files)
 
+		if self.str:
+			agg_files = self.__filter_stories(agg_files, self.str)
+
 		self.make_overall_file(agg_files)
 
 		print("Selected archives extracted to %s individual files" % len(agg_files))
 		# print(list(agg_files.keys()))
 		# print(stories)
+
+@click.group()
+def cli():
+	pass
+
+
+@cli.command()
+@click.argument('tag')
+def from_tag(tag):
+	'''
+	Generate an aggregate file for a specified tag
+	'''
+
+	gen = HtmlGenerator(target_tag=tag)
+	gen.go()
+
+
+@cli.command()
+@click.argument('string')
+def from_str(string):
+	'''
+	Generate an aggregate file for a specified string
+	'''
+
+	gen = HtmlGenerator(target_string=string)
+	gen.go()
+
+@cli.command()
+@click.argument('tag')
+@click.argument('string')
+def from_tag_str(tag, string):
+	'''
+	Generate an aggregate file for a specified string
+	'''
+
+	gen = HtmlGenerator(target_tag=tag, target_string=string)
+	gen.go()
+
+if __name__ == '__main__':
+	cli()
 
 
 def go():
@@ -439,9 +556,6 @@ def go():
 	tag = sys.argv[1]
 
 
-	gen = HtmlGenerator(tag)
-	print(gen)
-	gen.go()
 
 if __name__ == "__main__":
 	import logSetup
