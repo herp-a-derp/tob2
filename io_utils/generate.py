@@ -375,11 +375,14 @@ Table of Contents:
 
 
 		out = soup.prettify()
-
-		with open("Aggregate file %s%s.html" % (
+		fout_fname = "Aggregate file %s%s.html" % (
 					((" tag %s" % self.tag) if self.tag else ""),
 					((" with str %s" % self.str) if self.str else ""),
-				), 'w') as fp:
+				)
+		while "  " in fout_fname:
+			fout_fname = fout_fname.replace("  ", " ")
+
+		with open(fout_fname, 'w') as fp:
 			fp.write(out)
 
 		print("Resulting file size: %s" % len(out))
