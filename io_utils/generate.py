@@ -1,15 +1,10 @@
 
 
 import os
-import click
+import ast
 import os.path
-import markdown
-import WebRequest
-import json
-import logging
 import traceback
 import subprocess
-import ftfy
 import bs4
 import urllib.error
 import urllib.parse
@@ -22,6 +17,10 @@ import sys
 import magic
 import dateutil.parser
 
+import ftfy
+import markdown
+import click
+import WebRequest
 import spacy
 import natsort
 from fuzzywuzzy import fuzz
@@ -69,9 +68,11 @@ def minhash_str(in_str, perms, gram_sz):
 
 class HtmlGenerator():
 
-	def __init__(self, target_tag=None, target_string=None):
-		self.tag = target_tag
-		self.str = target_string
+	def __init__(self, target_tag=None, target_string=None, target_include_string=None, target_exclude_string=None):
+		self.tag     = target_tag
+		self.str     = target_string
+		self.inc_str = target_include_string
+		self.exc_str = target_exclude_string
 
 		self.input_tmp_dir  = os.path.abspath("./conv_temp/in")
 		self.proc_tmp_dir  = os.path.abspath("./conv_temp/mid")
@@ -375,9 +376,11 @@ Table of Contents:
 
 
 		out = soup.prettify()
-		fout_fname = "Aggregate file %s%s.html" % (
+		fout_fname = "Aggregate file %s%s%s%s.html" % (
 					((" tag %s" % self.tag) if self.tag else ""),
 					((" with str %s" % self.str) if self.str else ""),
+					((" with inc_str %s" % self.inc_str) if self.inc_str else ""),
+					((" with exc_str %s" % self.exc_str) if self.exc_str else ""),
 				)
 		while "  " in fout_fname:
 			fout_fname = fout_fname.replace("  ", " ")
@@ -468,13 +471,25 @@ Table of Contents:
 		return agg_files
 
 
-	def __filter_stories(self, agg_files, filter_str):
+	def __filter_stories(self, agg_files, filter_str=None, include_str_list=None, exclude_str_list=None):
 		for story_key in list(agg_files.keys()):
 			for fkey in list(agg_files[story_key]['files'].keys()):
-				if not filter_str.lower() in agg_files[story_key]['files'][fkey]['content_text'].lower():
-					print("Removing file %s from output" % agg_files[story_key]['files'][fkey]['fname'])
-					agg_files[story_key]['files'].pop(fkey)
+				story_lower = agg_files[story_key]['files'][fkey]['content_text'].lower()
 
+				if filter_str:
+					if not filter_str.lower() in story_lower:
+						print("Removing file %s from output due to filter_str" % agg_files[story_key]['files'][fkey]['fname'])
+						agg_files[story_key]['files'].pop(fkey)
+
+				if include_str_list:
+					if not any([tmp.lower() in story_lower for tmp in include_str_list]):
+						print("Removing file %s from output due to include_str_list" % agg_files[story_key]['files'][fkey]['fname'])
+						agg_files[story_key]['files'].pop(fkey)
+
+				if exclude_str_list:
+					if any([tmp.lower() in story_lower for tmp in exclude_str_list]):
+						print("Removing file %s from output due to exclude_str_list" % agg_files[story_key]['files'][fkey]['fname'])
+						agg_files[story_key]['files'].pop(fkey)
 
 		return agg_files
 
@@ -499,10 +514,14 @@ Table of Contents:
 
 		self.bulk_convert(agg_files)
 
+		if self.str or self.inc_str or self.exc_str:
+			agg_files = self.__filter_stories(agg_files      = agg_files,
+											filter_str       = self.str,
+											include_str_list = self.inc_str,
+											exclude_str_list = self.exc_str)
+
 		agg_files = self.consolidate_dupes(agg_files)
 
-		if self.str:
-			agg_files = self.__filter_stories(agg_files, self.str)
 
 		self.make_overall_file(agg_files)
 
@@ -516,10 +535,39 @@ def cli():
 
 
 @cli.command()
+@click.option('--tag', default=None)
+@click.option('--string', default=None)
+@click.option('--exclude-strings', default=None)
+@click.option('--include-strings', default=None)
+def gen(tag, string, exclude_strings, include_strings):
+	'''
+	Generic generate command
+	'''
+	if not any((tag, string, exclude_strings, include_strings)):
+		print("No args!")
+		return 1
+
+	if include_strings:
+		include_strings = ast.literal_eval(include_strings)
+	if exclude_strings:
+		exclude_strings = ast.literal_eval(exclude_strings)
+
+	print("CLI gen:")
+	print((tag, string, include_strings, exclude_strings))
+
+	gen = HtmlGenerator(
+		target_tag            = tag,
+		target_string         = string,
+		target_include_string = include_strings,
+		target_exclude_string = exclude_strings,
+		)
+	gen.go()
+
+@cli.command()
 @click.argument('tag')
 def from_tag(tag):
 	'''
-	Generate an aggregate file for a specified tag
+	Generate file for a specified tag
 	'''
 
 	gen = HtmlGenerator(target_tag=tag)
@@ -530,7 +578,7 @@ def from_tag(tag):
 @click.argument('string')
 def from_str(string):
 	'''
-	Generate an aggregate file for a specified string
+	Generate file for a specified string
 	'''
 
 	gen = HtmlGenerator(target_string=string)
@@ -541,7 +589,7 @@ def from_str(string):
 @click.argument('string')
 def from_tag_str(tag, string):
 	'''
-	Generate an aggregate file for a specified string
+	Generate file for a specified tag and string
 	'''
 
 	gen = HtmlGenerator(target_tag=tag, target_string=string)
