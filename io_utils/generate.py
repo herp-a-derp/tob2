@@ -472,24 +472,27 @@ Table of Contents:
 
 
 	def __filter_stories(self, agg_files, filter_str=None, include_str_list=None, exclude_str_list=None):
-		for story_key in list(agg_files.keys()):
+		for story_key in tqdm.tqdm(list(agg_files.keys())):
 			for fkey in list(agg_files[story_key]['files'].keys()):
 				story_lower = agg_files[story_key]['files'][fkey]['content_text'].lower()
 
 				if filter_str:
 					if not filter_str.lower() in story_lower:
-						print("Removing file %s from output due to filter_str" % agg_files[story_key]['files'][fkey]['fname'])
-						agg_files[story_key]['files'].pop(fkey)
+						if fkey in agg_files[story_key]['files']:
+							print("Removing file %s from output due to filter_str" % agg_files[story_key]['files'][fkey]['fname'])
+							agg_files[story_key]['files'].pop(fkey)
 
 				if include_str_list:
 					if not any([tmp.lower() in story_lower for tmp in include_str_list]):
-						print("Removing file %s from output due to include_str_list" % agg_files[story_key]['files'][fkey]['fname'])
-						agg_files[story_key]['files'].pop(fkey)
+						if fkey in agg_files[story_key]['files']:
+							print("Removing file %s from output due to include_str_list" % agg_files[story_key]['files'][fkey]['fname'])
+							agg_files[story_key]['files'].pop(fkey)
 
 				if exclude_str_list:
 					if any([tmp.lower() in story_lower for tmp in exclude_str_list]):
-						print("Removing file %s from output due to exclude_str_list" % agg_files[story_key]['files'][fkey]['fname'])
-						agg_files[story_key]['files'].pop(fkey)
+						if fkey in agg_files[story_key]['files']:
+							print("Removing file %s from output due to exclude_str_list" % agg_files[story_key]['files'][fkey]['fname'])
+							agg_files[story_key]['files'].pop(fkey)
 
 		return agg_files
 
@@ -500,19 +503,31 @@ Table of Contents:
 		else:
 			stories = self.load_all_stories()
 
-		agg_files = {}
-		for story in tqdm.tqdm(stories, desc="Loading Stories"):
-			ret = self.load_story(story)
-			story['files'] = {}
-			for fname, fpath, fcont in ret:
-				story['files'][fpath] = {}
-				story['files'][fpath]['fpath'] = fpath
-				story['files'][fpath]['fcont'] = fcont
-				story['files'][fpath]['fname'] = fname
 
-			agg_files[(story['author'], story['title'])] = story
+		pik_name = "loaded_story_cache.pik"
+		if os.path.exists(pik_name):
+			print("Have cached loaded story file. Using that.")
+			with open(pik_name, "rb") as fp:
+				agg_files = pickle.load(fp)
+		else:
+			agg_files = {}
+			print("No loaded story file. Regenerating.")
+			for story in tqdm.tqdm(stories, desc="Loading Stories"):
+				ret = self.load_story(story)
+				story['files'] = {}
+				for fname, fpath, fcont in ret:
+					story['files'][fpath] = {}
+					story['files'][fpath]['fpath'] = fpath
+					story['files'][fpath]['fcont'] = fcont
+					story['files'][fpath]['fname'] = fname
 
-		self.bulk_convert(agg_files)
+				agg_files[(story['author'], story['title'])] = story
+
+			self.bulk_convert(agg_files)
+
+			print("Dumping loaded story cache file.")
+			with open(pik_name, "wb") as fp:
+				pickle.load(agg_files, fp)
 
 		if self.str or self.inc_str or self.exc_str:
 			agg_files = self.__filter_stories(agg_files      = agg_files,
