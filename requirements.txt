@@ -50,7 +50,7 @@ sqlalchemy-citext==1.3-0
 sqlalchemy-migrate==0.11.0
 SQLAlchemy-Searchable==1.0.3
 SQLAlchemy-Utils==0.33.3
-sqlparse
+sqlparse==0.2.4
 Tempita
 validators
 Werkzeug
