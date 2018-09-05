@@ -37,7 +37,7 @@ psutil==5.4.7
 psycopg2==2.7.5
 pyparsing==2.2.0
 python-datauri==0.2.8
-python-bcrypt
+python-bcrypt==0.3.2
 python-dateutil
 python-levenshtein
 pytz
