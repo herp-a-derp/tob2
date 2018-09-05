@@ -2,7 +2,7 @@ alembic==1.0.0
 APScheduler==3.5.3
 awesome-slugify==1.6.5
 Babel==2.6.0
-bleach
+bleach==2.1.4
 blinker
 coverage
 decorator
