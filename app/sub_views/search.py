@@ -58,6 +58,8 @@ def execute_search():
 	search.update(dict(request.args.items()))
 	search.update(dict(request.form.items()))
 
+	print("Search for %s" % search)
+
 	if 'title' in search:
 		return title_search(search['title'])
 	else:

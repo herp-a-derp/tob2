@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_babel import Babel, lazy_gettext
-from flask_wtf.csrf import CsrfProtect
+from flask_wtf.csrf import CSRFProtect
 from flask_debugtoolbar import DebugToolbarExtension
 from config import basedir
 import datetime
@@ -46,7 +46,7 @@ lm.login_view = 'login'
 lm.login_message = 'Please log in to access this page.'
 mail = Mail(app)
 babel = Babel(app)
-csrf = CsrfProtect(app)
+csrf = CSRFProtect(app)
 
 if "debug" in sys.argv:
 	print("Installing debug toolbar!")

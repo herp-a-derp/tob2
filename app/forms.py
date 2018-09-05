@@ -1,6 +1,6 @@
 
 import binascii
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms import BooleanField
 from wtforms import TextAreaField
@@ -23,7 +23,7 @@ from app import db
 def loginError():
 	raise ValidationError("Your username or password is incorrect.")
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
 	username =   StringField('Username', validators=[DataRequired(), Length(min=5)])
 	password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
 	remember_me = BooleanField('remember_me', default=False)
@@ -48,7 +48,7 @@ class LoginForm(Form):
 			loginError()
 
 
-class PostForm(Form):
+class PostForm(FlaskForm):
 	title   = StringField('Title',     validators=[DataRequired(), Length(max=128)])
 	content = TextAreaField('Content', validators=[DataRequired()])
 
@@ -67,7 +67,7 @@ ratings = [
 	( '0',  '0'),
 ]
 
-class ReviewForm(Form):
+class ReviewForm(FlaskForm):
 	nickname         = StringField('Nickname',          validators=[DataRequired(), Length(min=5, max=60)])
 	overall_rating   = SelectField("Overall Rating",    choices=ratings)
 	be_rating        = SelectField("BE Content",        choices=ratings)
@@ -76,6 +76,6 @@ class ReviewForm(Form):
 
 	comments         = TextAreaField('Comments', validators=[DataRequired(), Length(min=30, max=1000)])
 
-class SearchForm(Form):
+class SearchForm(FlaskForm):
 	search = StringField('search', validators=[DataRequired()])
 

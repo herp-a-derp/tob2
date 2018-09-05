@@ -68,8 +68,8 @@ def minhash_str(in_str, perms, gram_sz):
 
 class HtmlGenerator():
 
-	def __init__(self, target_tag=None, target_string=None, target_include_string=None, target_exclude_string=None):
-		self.tag     = target_tag
+	def __init__(self, target_tags=None, target_string=None, target_include_string=None, target_exclude_string=None):
+		self.tags     = target_tags
 		self.str     = target_string
 		self.inc_str = target_include_string
 		self.exc_str = target_exclude_string
@@ -102,18 +102,34 @@ class HtmlGenerator():
 			ret.append(story_dat)
 
 		ret.sort(key=lambda x: x['title'])
+		print("Found %s files in %s story bundles" % (len(ret), len(stories_list)))
 		return ret
 
 
-	def load_stories_for_tag(self, tag):
+	def load_stories_for_tag(self, tags):
 		with app.app.app_context():
-			# stories = app.models.Story.query.all()
+			story_count = app.models.Story.query.count()
 			# print(stories)
-			tag_instances = app.models.Tags.query.filter(app.models.Tags.tag==tag).all()
+			tag_instances = app.models.Tags.query.filter(app.models.Tags.tag == tags[0]).all()
 			if not tag_instances:
 				print("No tag instances!")
+
 			stories = [tmp.series_row for tmp in tag_instances if tmp.series_row.fspath]
-			print("Found %s matching tags, %s matching stories" % (len(tag_instances), len(stories)))
+			print("%s stories matching tag %s" % (len(stories), tags[0]))
+
+			print("Tags = ", stories[0].tags)
+
+			stories = [
+					tmp
+				for
+					tmp
+				in
+					stories
+				if
+					all([tag in [tagtag.tag for tagtag in tmp.tags] for tag in tags])
+			]
+
+			print("Found %s matching tags, %s/%s matching stories" % (len(tag_instances), len(stories), story_count))
 
 			return self.__unpack_stories(stories)
 
@@ -251,6 +267,8 @@ class HtmlGenerator():
 		with open(tmp_p + ".html") as fp:
 			html_in = fp.read()
 
+		html_in = ftfy.fix_text(html_in)
+
 		proc = HtmlProcessor.HtmlPageProcessor(in_p, html_in)
 		out_dat = proc.extractContent()
 
@@ -292,8 +310,8 @@ class HtmlGenerator():
 		os.makedirs(self.proc_tmp_dir,   exist_ok=True)
 		os.makedirs(self.output_tmp_dir, exist_ok=True)
 
-		results = []
 
+		print("Doing bulk conversion.")
 		with ThreadPoolExecutor(max_workers=4) as exc:
 			for story_key in tqdm.tqdm(files.keys(), desc="Converting Files"):
 				for f_key in files[story_key]['files'].keys():
@@ -316,6 +334,9 @@ class HtmlGenerator():
 					except Exception:
 						traceback.print_exc()
 						print("Failure converting %s (%s)!" % (files[story_key]['files'][f_key]['fname'], files[story_key]['title']))
+
+					if 'future' in files[story_key]['files'][f_key]:
+						files[story_key]['files'][f_key].pop('future')
 
 	def make_overall_file(self, files):
 		header = '''
@@ -377,7 +398,7 @@ Table of Contents:
 
 		out = soup.prettify()
 		fout_fname = "Aggregate file %s%s%s%s.html" % (
-					((" tag %s" % self.tag) if self.tag else ""),
+					((" tag %s" % (self.tags, )) if self.tags else ""),
 					((" with str %s" % self.str) if self.str else ""),
 					((" with inc_str %s" % self.inc_str) if self.inc_str else ""),
 					((" with exc_str %s" % self.exc_str) if self.exc_str else ""),
@@ -426,8 +447,7 @@ Table of Contents:
 					in
 						smap.items()
 				]
-
-			print("Consuming futures")
+			print("Submitted %s jobs. Consuming futures" % len(futures))
 			for key, future in tqdm.tqdm(futures, "Hashing"):
 				minhash = future.result()
 				lsh.insert(key, minhash)
@@ -498,10 +518,8 @@ Table of Contents:
 
 
 	def go(self):
-		if self.tag:
-			stories = self.load_stories_for_tag(self.tag)
-		else:
-			stories = self.load_all_stories()
+		print("Loading all stories")
+		stories = self.load_all_stories()
 
 
 		pik_name = "loaded_story_cache.pik"
@@ -527,7 +545,35 @@ Table of Contents:
 
 			print("Dumping loaded story cache file.")
 			with open(pik_name, "wb") as fp:
-				pickle.load(agg_files, fp)
+				pickle.dump(agg_files, fp)
+
+
+
+		if self.tags:
+			print("Loading stories for tag %s" % (self.tags, ))
+			stories = self.load_stories_for_tag(self.tags)
+			print("Filtering stories. Input: %s, %s" % (len(stories), len(agg_files)))
+			wanted_keys = set([
+						(story['author'], story['title'])
+					for
+						story
+					in
+						stories
+				])
+
+			agg_files = {
+						key : value
+					for
+						key, value
+					in
+						agg_files.items()
+					if
+						key in wanted_keys
+				}
+			print("Tag filter output: ", len(agg_files))
+
+
+
 
 		if self.str or self.inc_str or self.exc_str:
 			agg_files = self.__filter_stories(agg_files      = agg_files,
@@ -550,7 +596,7 @@ def cli():
 
 
 @cli.command()
-@click.option('--tag', default=None)
+@click.option('--tag', default=None, multiple=True)
 @click.option('--string', default=None)
 @click.option('--exclude-strings', default=None)
 @click.option('--include-strings', default=None)
@@ -571,7 +617,7 @@ def gen(tag, string, exclude_strings, include_strings):
 	print((tag, string, include_strings, exclude_strings))
 
 	gen = HtmlGenerator(
-		target_tag            = tag,
+		target_tags            = tag,
 		target_string         = string,
 		target_include_string = include_strings,
 		target_exclude_string = exclude_strings,
@@ -585,7 +631,7 @@ def from_tag(tag):
 	Generate file for a specified tag
 	'''
 
-	gen = HtmlGenerator(target_tag=tag)
+	gen = HtmlGenerator(target_tags=[tag])
 	gen.go()
 
 
@@ -607,7 +653,7 @@ def from_tag_str(tag, string):
 	Generate file for a specified tag and string
 	'''
 
-	gen = HtmlGenerator(target_tag=tag, target_string=string)
+	gen = HtmlGenerator(target_tags=[tag], target_string=string)
 	gen.go()
 
 if __name__ == '__main__':
