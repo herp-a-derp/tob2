@@ -41,7 +41,7 @@ python-bcrypt==0.3.2
 python-dateutil==2.7.3
 python-levenshtein==0.12.0
 pytz==2018.5
-beautifulsoup4
+beautifulsoup4==4.6.3
 lxml
 six
 speaklater
