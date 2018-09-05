@@ -33,7 +33,7 @@ Markdown==2.6.11
 MarkupSafe==1.0
 pbr==4.2.0
 pstat==0.0.1
-psutil
+psutil==5.4.7
 psycopg2
 pyparsing
 python-datauri
