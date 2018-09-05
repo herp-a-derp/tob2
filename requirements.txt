@@ -34,7 +34,7 @@ MarkupSafe==1.0
 pbr==4.2.0
 pstat==0.0.1
 psutil==5.4.7
-psycopg2
+psycopg2==2.7.5
 pyparsing
 python-datauri
 python-bcrypt
