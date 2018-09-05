@@ -36,7 +36,7 @@ pstat==0.0.1
 psutil==5.4.7
 psycopg2==2.7.5
 pyparsing==2.2.0
-python-datauri
+python-datauri==0.2.8
 python-bcrypt
 python-dateutil
 python-levenshtein
