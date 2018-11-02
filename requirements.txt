@@ -33,7 +33,7 @@ Markdown==3.0.1
 MarkupSafe==1.0
 pbr==5.1.0
 pstat==0.0.1
-psutil==5.4.7
+psutil==5.4.8
 psycopg2==2.7.5
 pyparsing==2.2.0
 python-datauri==0.2.8
