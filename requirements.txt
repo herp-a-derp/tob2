@@ -35,7 +35,7 @@ pbr==5.1.1
 pstat==0.0.1
 psutil==5.4.8
 psycopg2==2.7.6
-pyparsing==2.2.0
+pyparsing==2.3.0
 python-datauri==0.2.8
 python-bcrypt==0.3.2
 python-dateutil==2.7.3
