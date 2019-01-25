@@ -30,7 +30,7 @@ itsdangerous==1.1.0
 Jinja2==2.10
 Mako==1.0.7
 Markdown==3.0.1
-MarkupSafe==1.0
+MarkupSafe==1.1.0
 pbr==4.2.0
 pstat==0.0.1
 psutil==5.4.7
