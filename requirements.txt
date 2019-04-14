@@ -27,7 +27,7 @@ guess-language==0.2
 html5lib==1.0.1
 colorama==0.4.1
 itsdangerous==1.1.0
-Jinja2
+Jinja2==2.10.1
 Mako
 Markdown
 MarkupSafe
