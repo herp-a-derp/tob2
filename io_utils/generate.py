@@ -23,6 +23,7 @@ import click
 import WebRequest
 import spacy
 import natsort
+import zipfile
 from fuzzywuzzy import fuzz
 import tqdm
 import UniversalArchiveInterface
@@ -68,9 +69,19 @@ def minhash_str(in_str, perms, gram_sz):
 
 class HtmlGenerator():
 
-	def __init__(self, target_tags=None, target_string=None, target_include_string=None, target_exclude_string=None):
+	def __init__(self,
+			target_tags=None,
+			target_string=None,
+			target_author=None,
+			target_include_string=None,
+			target_exclude_string=None
+			):
+
+		print("HTML Generator init!")
+
 		self.tags     = target_tags
 		self.str     = target_string
+		self.author     = target_author
 		self.inc_str = target_include_string
 		self.exc_str = target_exclude_string
 
@@ -133,6 +144,29 @@ class HtmlGenerator():
 
 			return self.__unpack_stories(stories)
 
+	def load_stories_for_author(self, author):
+		assert isinstance(author, str), "Author must be a string. Passed %s (%s)" % (type(author), author)
+
+		with app.app.app_context():
+			story_count = app.models.Story.query.count()
+			# print(stories)
+			query = app.models.Author.query.filter(app.models.Author.name.ilike("%{}%".format(author)))
+			print("Query: '%s'"  % query)
+			auth_instances = query.all()
+			if not auth_instances:
+				print("No tag instances!")
+
+			stories = [tmp.series_row for tmp in auth_instances if tmp.series_row.fspath]
+			print("%s stories matching author %s" % (len(stories), author))
+
+			auths = [tmp.name for tmp in stories[0].author]
+
+			print("Author = ", auths)
+
+			print("Found %s matching tags, %s/%s matching stories" % (len(auths), len(stories), story_count))
+
+			return self.__unpack_stories(stories)
+
 	def load_all_stories(self):
 		with app.app.app_context():
 			story_instances = app.models.Story.query.all()
@@ -168,6 +202,9 @@ class HtmlGenerator():
 				zfp = UniversalArchiveInterface.ArchiveReader(fpath)
 			except UniversalArchiveInterface.NotAnArchive:
 				print("Don't know how to process '%s' file type." % (ftype))
+				return []
+			except UniversalArchiveInterface.CorruptArchive:
+				print("Archive corrupt: '%s'." % (ftype))
 				return []
 
 		files = []
@@ -207,6 +244,9 @@ class HtmlGenerator():
 		# Thrown on password protected zips. Apparently.
 		except RuntimeError:
 			pass
+		except (UniversalArchiveInterface.CorruptArchive, zipfile.BadZipFile):
+			print("Archive corrupt: '%s'." % (fpath))
+			return []
 
 		return files
 
@@ -397,11 +437,12 @@ Table of Contents:
 
 
 		out = soup.prettify()
-		fout_fname = "Aggregate file %s%s%s%s.html" % (
+		fout_fname = "Aggregate file %s%s%s%s%s.html" % (
 					((" tag %s" % (self.tags, )) if self.tags else ""),
-					((" with str %s" % self.str) if self.str else ""),
-					((" with inc_str %s" % self.inc_str) if self.inc_str else ""),
-					((" with exc_str %s" % self.exc_str) if self.exc_str else ""),
+					((" author %s" % (self.author, )) if self.author else ""),
+					((" with str %s" % (self.str, )) if self.str else ""),
+					((" with inc_str %s" % (self.inc_str, )) if self.inc_str else ""),
+					((" with exc_str %s" % (self.exc_str, )) if self.exc_str else ""),
 				)
 		while "  " in fout_fname:
 			fout_fname = fout_fname.replace("  ", " ")
@@ -574,6 +615,23 @@ Table of Contents:
 
 
 
+		if self.author:
+			print("Loading stories for author %s" % (self.author, ))
+			for key in agg_files.keys():
+				print("Key: ", key)
+			agg_files = {
+						key : value
+					for
+						key, value
+					in
+						agg_files.items()
+					if
+						self.author.lower() in str(key).lower()
+				}
+			print("Author filter output: ", len(agg_files))
+
+
+
 
 		if self.str or self.inc_str or self.exc_str:
 			agg_files = self.__filter_stories(agg_files      = agg_files,
@@ -646,6 +704,16 @@ def from_str(string):
 	gen.go()
 
 @cli.command()
+@click.argument('author')
+def from_author(author):
+	'''
+	Generate file for a specified author
+	'''
+
+	gen = HtmlGenerator(target_author=author)
+	gen.go()
+
+@cli.command()
 @click.argument('tag')
 @click.argument('string')
 def from_tag_str(tag, string):
@@ -665,11 +733,12 @@ def go():
 	if len(sys.argv) != 2:
 		print("You need to pass a tag to generate content for!")
 		return
-	tag = sys.argv[1]
 
 
 
 if __name__ == "__main__":
 	import logSetup
 	logSetup.initLogging()
+	print("Startup!")
+
 	go()

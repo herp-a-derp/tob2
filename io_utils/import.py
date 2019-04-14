@@ -23,7 +23,7 @@ class Walker():
 	sourceurl = "http://overflowingbra.com/ding.htm?dates=%d"
 
 	year_min = 1998
-	year_max = 2018
+	year_max = 2019
 
 	yearpik_name = "stories_for_year_%s.pik"
 	aggpik_name  = "stories_all.pik"
