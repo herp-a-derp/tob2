@@ -11,7 +11,7 @@ Flask-Babel==0.12.2
 Flask-Bcrypt==0.7.1
 Flask-DebugToolbar==0.10.1
 CherryPy<18.0.0  # pyup: <18.0.0
-Flask-Login
+Flask-Login==0.4.1
 Flask-Mail
 Flask-Migrate
 Flask-assets
