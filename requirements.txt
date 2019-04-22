@@ -24,7 +24,7 @@ flipflop==1.0
 natsort==6.0.0
 guess-language-spirit==0.5.3
 guess-language==0.2
-html5lib
+html5lib==1.0.1
 colorama
 itsdangerous
 Jinja2
