@@ -52,7 +52,7 @@ SQLAlchemy-Searchable==1.0.3
 SQLAlchemy-Utils==0.33.11
 sqlparse==0.3.0
 Tempita==0.5.2
-validators
+validators==0.12.5
 Werkzeug
 WTForms-JSON
 WTForms
