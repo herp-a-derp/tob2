@@ -53,7 +53,7 @@ SQLAlchemy-Utils==0.33.11
 sqlparse==0.3.0
 Tempita==0.5.2
 validators==0.12.6
-Werkzeug
+Werkzeug==0.15.2
 WTForms-JSON
 WTForms
 webcolors
