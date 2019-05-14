@@ -56,5 +56,5 @@ validators==0.12.6
 Werkzeug==0.15.2
 WTForms-JSON==0.3.3
 WTForms==2.2.1
-webcolors
+webcolors==1.8.1
 WebRequest
