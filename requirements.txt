@@ -1,4 +1,4 @@
-alembic
+alembic==1.0.10
 APScheduler
 awesome-slugify
 Babel
