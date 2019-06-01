@@ -57,4 +57,4 @@ Werkzeug==0.15.4
 WTForms-JSON==0.3.3
 WTForms==2.2.1
 webcolors==1.8.1
-WebRequest
+WebRequest==0.0.55
