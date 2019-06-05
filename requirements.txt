@@ -1,6 +1,6 @@
 alembic==1.0.10
 APScheduler==3.6.0
-awesome-slugify
+awesome-slugify==1.6.5
 Babel
 bleach
 blinker
