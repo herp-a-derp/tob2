@@ -42,7 +42,7 @@ python-dateutil==2.8.0
 python-levenshtein==0.12.0
 pytz==2019.1
 beautifulsoup4==4.7.1
-lxml
+lxml==4.3.4
 six
 speaklater
 SQLAlchemy
