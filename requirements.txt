@@ -15,7 +15,7 @@ Flask-Login==0.4.1
 Flask-Mail==0.9.1
 Flask-Migrate==2.5.2
 Flask-assets==0.12
-Flask-Markdown
+Flask-Markdown==0.3
 Flask-Script
 Flask-SQLAlchemy
 Flask-WTF
