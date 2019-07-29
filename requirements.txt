@@ -22,7 +22,7 @@ Flask-WTF==0.14.2
 Flask==1.1.1
 flipflop==1.0
 natsort==6.0.0
-guess-language-spirit
+guess-language-spirit==0.5.3
 guess-language
 html5lib
 colorama
