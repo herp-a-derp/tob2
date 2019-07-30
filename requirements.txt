@@ -4,7 +4,7 @@ awesome-slugify==1.6.5
 Babel==2.7.0
 bleach==3.1.0
 blinker==1.4
-coverage
+coverage==4.5.4
 decorator
 defusedxml
 Flask-Babel
