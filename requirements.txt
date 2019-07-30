@@ -21,7 +21,7 @@ Flask-SQLAlchemy==2.4.0
 Flask-WTF==0.14.2
 Flask==1.1.1
 flipflop==1.0
-natsort
+natsort==6.0.0
 guess-language-spirit
 guess-language
 html5lib
