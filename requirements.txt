@@ -55,6 +55,6 @@ Tempita==0.5.2
 validators==0.13.0
 Werkzeug==0.15.5
 WTForms-JSON==0.3.3
-WTForms
+WTForms==2.2.1
 webcolors
 WebRequest
