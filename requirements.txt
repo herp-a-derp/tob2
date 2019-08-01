@@ -1,5 +1,5 @@
 alembic==1.0.11
-APScheduler
+APScheduler==3.6.1
 awesome-slugify
 Babel
 bleach
