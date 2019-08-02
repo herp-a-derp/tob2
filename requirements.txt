@@ -38,7 +38,7 @@ psycopg2==2.8.3
 pyparsing==2.4.2
 python-datauri==0.2.8
 python-bcrypt==0.3.2
-python-dateutil
+python-dateutil==2.8.0
 python-levenshtein
 pytz
 beautifulsoup4
