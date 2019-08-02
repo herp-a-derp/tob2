@@ -5,7 +5,7 @@ Babel==2.7.0
 bleach==3.1.0
 blinker==1.4
 coverage==4.5.4
-decorator
+decorator==4.4.0
 defusedxml
 Flask-Babel
 Flask-Bcrypt
