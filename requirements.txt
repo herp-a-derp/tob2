@@ -32,7 +32,7 @@ Mako==1.1.0
 Markdown==3.1.1
 MarkupSafe==1.1.1
 pbr==5.4.1
-pstat
+pstat==0.0.1
 psutil
 psycopg2
 pyparsing
