@@ -31,7 +31,7 @@ Jinja2==2.10.1
 Mako==1.1.0
 Markdown==3.1.1
 MarkupSafe==1.1.1
-pbr
+pbr==5.4.1
 pstat
 psutil
 psycopg2
