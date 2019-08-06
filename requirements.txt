@@ -18,7 +18,7 @@ Flask-assets==0.12
 Flask-Markdown==0.3
 Flask-Script==2.0.6
 Flask-SQLAlchemy==2.4.0
-Flask-WTF
+Flask-WTF==0.14.2
 Flask
 flipflop
 natsort
