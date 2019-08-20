@@ -14,7 +14,7 @@ CherryPy<18.0.0  # pyup: <18.0.0
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
 Flask-Migrate==2.5.2
-Flask-assets
+Flask-assets==0.12
 Flask-Markdown
 Flask-Script
 Flask-SQLAlchemy
