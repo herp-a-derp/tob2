@@ -44,7 +44,7 @@ pytz==2019.2
 beautifulsoup4==4.8.0
 lxml==4.4.1
 six==1.12.0
-speaklater
+speaklater==1.3
 SQLAlchemy
 sqlalchemy-citext
 sqlalchemy-migrate
