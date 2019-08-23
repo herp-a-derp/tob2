@@ -54,7 +54,7 @@ sqlparse==0.3.0
 Tempita==0.5.2
 validators==0.14.0
 Werkzeug==0.15.5
-WTForms-JSON
+WTForms-JSON==0.3.3
 WTForms
 webcolors
 WebRequest
