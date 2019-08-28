@@ -23,7 +23,7 @@ Flask==1.1.1
 flipflop==1.0
 natsort==6.0.0
 guess-language-spirit==0.5.3
-guess-language
+guess-language==0.2
 html5lib
 colorama
 itsdangerous
