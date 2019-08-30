@@ -39,7 +39,7 @@ pyparsing==2.4.2
 python-datauri==0.2.8
 python-bcrypt==0.3.2
 python-dateutil==2.8.0
-python-levenshtein
+python-levenshtein==0.12.0
 pytz
 beautifulsoup4
 lxml
