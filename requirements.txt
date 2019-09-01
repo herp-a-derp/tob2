@@ -19,7 +19,7 @@ Flask-Markdown==0.3
 Flask-Script==2.0.6
 Flask-SQLAlchemy==2.4.0
 Flask-WTF==0.14.2
-Flask
+Flask==1.1.1
 flipflop
 natsort
 guess-language-spirit
