@@ -313,6 +313,8 @@ class HtmlGenerator():
 		out_dat = proc.extractContent()
 
 
+		out_dat['contents'] = ftfy.fix_text(out_dat['contents'])
+
 		ret_s = "<div>\n" + out_dat['contents'] + "</div>\n"
 
 		print("Writing to output cache: %s", cachefile)

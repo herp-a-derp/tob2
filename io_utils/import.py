@@ -23,7 +23,7 @@ class Walker():
 	sourceurl = "http://overflowingbra.com/ding.htm?dates=%d"
 
 	year_min = 1998
-	year_max = 2019
+	year_max = 2022
 
 	yearpik_name = "stories_for_year_%s.pik"
 	aggpik_name  = "stories_all.pik"
@@ -79,6 +79,8 @@ class Walker():
 		try:
 			ret['file'] = self.get_story_file(story_div.find("div", class_='storytitle'))
 		except urllib.error.URLError:
+			return None
+		except WebRequest.FetchFailureError:
 			return None
 
 		assert all([tmp != None for tmp in ret.values()])

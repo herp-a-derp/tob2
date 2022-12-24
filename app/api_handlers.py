@@ -156,9 +156,9 @@ def saveFile(filecont, filename):
 
 def addStory(updateDat):
 	assert 'story' in updateDat
+
 	story = updateDat['story']
-
-
+	story['clean_name'] = bleach.clean(story['name'], tags=[], strip=True)
 
 	assert 'name' in story
 	assert 'auth' in story
@@ -176,17 +176,18 @@ def addStory(updateDat):
 		# print("Have file already!")
 		return getResponse("A file with that MD5 hash already exists! Are you accidentally adding a duplicate?", True)
 
-	have = Story.query.filter(Story.title == story['name']).scalar()
+	have = Story.query.filter(Story.title == story['clean_name']).scalar()
 	if have:
 		orig_name = story['name']
 		loop = 2
 		while have:
 			print("Have story with that name ('%s')!" % story['name'])
 			story['name'] = orig_name + " (%s)" % loop
-			have = Story.query.filter(Story.title == story['name']).scalar()
+			story['clean_name'] = bleach.clean(story['name'], tags=[], strip=True)
+			have = Story.query.filter(Story.title == story['clean_name']).scalar()
 			loop += 1
-		print("Story added with number in name: '%s'" % story['name'])
 
+		print("Story added with number in name: '%s'" % story['name'])
 
 	if len(story['name']) > 80:
 		return getResponse("Maximum story title length is 80 characters!", True)
@@ -201,12 +202,13 @@ def addStory(updateDat):
 	if len(story['desc']) > 500:
 		return getResponse("Maximum story description length is 500 characters!", True)
 
-
 	fspath = saveFile(data.data, story['fname'])
 
 	stags = ["-".join(itm_tags.split(" ")) for itm_tags in story['tags']]
 	stags = [bleach.clean(tag, tags=[], strip=True) for tag in stags]
 
+	# print("name: ", story['name'])
+	# print("clean_name: ", story['clean_name'])
 	# print("Author: ", story['auth'])
 	# print("stags: ", story['tags'])
 	# print("stags: ", stags)
@@ -216,7 +218,7 @@ def addStory(updateDat):
 		post_date = story['ul_date']
 
 	new = Story(
-		title       = bleach.clean(story['name'], tags=[], strip=True),
+		title       = story['clean_name'],
 		srcfname    = story['fname'],
 		description = markdown.markdown(bleach.clean(story['desc'], strip=True)),
 		fspath      = fspath,
